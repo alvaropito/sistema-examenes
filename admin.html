@@ -211,6 +211,23 @@
         return;
       }
 
+      // Validar que sea una URL de Google Forms
+      const trimmedUrl = rawUrl.trim();
+      const isGoogleForm = /^https?:\/\/(docs\.google\.com\/forms|forms\.gle)\//i.test(trimmedUrl);
+      if (!isGoogleForm) {
+        const proceed = confirm(
+          '⚠️ La URL ingresada no parece ser un enlace de Google Forms.\n\n' +
+          'URLs válidas tienen este formato:\n' +
+          '• https://docs.google.com/forms/d/e/.../viewform\n' +
+          '• https://forms.gle/...\n\n' +
+          '¿Deseas continuar de todos modos con esta URL?'
+        );
+        if (!proceed) {
+          document.getElementById('formUrl').focus();
+          return;
+        }
+      }
+
       if (!pin) {
         alert('Por favor ingresa o genera una contraseña/PIN para el examen');
         document.getElementById('examPin').focus();
