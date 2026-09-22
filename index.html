@@ -319,11 +319,11 @@
       }
     }
 
-    // Helper universal para solicitar pantalla completa en navegadores modernos y legados
+    // Helper universal para solicitar pantalla completa
     function requestBrowserFullscreen() {
       const docEl = document.documentElement;
       if (docEl.requestFullscreen) {
-        return docEl.requestFullscreen({ navigationUI: 'hide' }).catch(() => docEl.requestFullscreen());
+        return docEl.requestFullscreen();
       } else if (docEl.webkitRequestFullscreen) {
         return docEl.webkitRequestFullscreen();
       } else if (docEl.mozRequestFullScreen) {
@@ -334,20 +334,14 @@
       return Promise.reject(new Error('Fullscreen no compatible con este navegador'));
     }
 
-    // Comprobar si el documento se encuentra en modo pantalla completa (API estándar o F11)
+    // Comprobar estrictamente si el documento está en pantalla completa activa
     function isBrowserFullscreen() {
-      const hasElement = !!(
+      return !!(
         document.fullscreenElement ||
         document.webkitFullscreenElement ||
         document.mozFullScreenElement ||
         document.msFullscreenElement
       );
-      if (hasElement) return true;
-
-      // Detección por dimensiones físicas de pantalla (para cuando usan F11 del navegador)
-      const heightMatch = Math.abs(window.innerHeight - screen.height) <= 10;
-      const widthMatch = Math.abs(window.innerWidth - screen.width) <= 10;
-      return heightMatch && widthMatch;
     }
 
     // Botón en la barra superior (HUD) para activar pantalla completa en cualquier momento
@@ -355,7 +349,7 @@
       try {
         await requestBrowserFullscreen();
       } catch (e) {
-        alert('Puedes presionar la tecla F11 de tu teclado para activar Pantalla Completa.');
+        console.warn('Error fullscreen HUD:', e);
       }
     });
 
@@ -477,17 +471,14 @@
       ExamState.isExamActive = true;
 
       // 6. FORZAR PANTALLA COMPLETA:
-      // Esperar brevemente a que el navegador termine la animación de fullscreen
       const wrapper = document.getElementById('iframeWrapper');
-      setTimeout(() => {
-        if (!isBrowserFullscreen()) {
-          if (wrapper) wrapper.style.visibility = 'hidden';
-          document.getElementById('fullscreenEnforcerModal').classList.remove('hidden');
-        } else {
-          if (wrapper) wrapper.style.visibility = 'visible';
-          document.getElementById('fullscreenEnforcerModal').classList.add('hidden');
-        }
-      }, 300);
+      if (!isBrowserFullscreen()) {
+        if (wrapper) wrapper.style.visibility = 'hidden';
+        document.getElementById('fullscreenEnforcerModal').classList.remove('hidden');
+      } else {
+        if (wrapper) wrapper.style.visibility = 'visible';
+        document.getElementById('fullscreenEnforcerModal').classList.add('hidden');
+      }
 
       // 7. Activar motor de supervisión continua
       enableSupervisionEngine();
