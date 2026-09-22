@@ -61,7 +61,7 @@
 
         <div id="authError" class="form-hint" style="color: #f87171; font-weight: 600; margin-bottom: 1rem; display: none;"></div>
 
-        <button type="submit" id="btnStartExam" class="btn btn-primary btn-block btn-lg">
+        <button type="button" id="btnStartExam" class="btn btn-primary btn-block btn-lg">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"></path></svg>
           Iniciar Examen en Pantalla Completa
         </button>
@@ -116,9 +116,6 @@
         class="exam-iframe" 
         src="about:blank"
         allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-        allowfullscreen="true"
-        webkitallowfullscreen="true"
-        mozallowfullscreen="true"
       ></iframe>
     </main>
   </div>
@@ -344,19 +341,8 @@
       );
     }
 
-    // Disparar pantalla completa de forma inmediata y directa en el evento 'click' del usuario
-    // (Asegura el token de activación antes de que las promesas de descifrado expiren)
-    document.getElementById('btnStartExam').addEventListener('click', () => {
-      if (!isBrowserFullscreen()) {
-        requestBrowserFullscreen().catch((err) => {
-          console.log('Solicitud anticipada de fullscreen:', err);
-        });
-      }
-    });
-
-    // Manejador del Formulario de Inicio
-    document.getElementById('startExamForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    // Manejador único del botón Iniciar Examen (100% directo al clic del usuario)
+    document.getElementById('btnStartExam').addEventListener('click', async () => {
       const errorDiv = document.getElementById('authError');
       errorDiv.style.display = 'none';
 
@@ -377,19 +363,16 @@
       if (!name || !id || !pin) {
         errorDiv.innerText = 'Por favor completa todos los campos requeridos.';
         errorDiv.style.display = 'block';
-        if (isBrowserFullscreen()) {
-          document.exitFullscreen().catch(() => {});
-        }
         return;
       }
 
-      // 1. SOLICITAR PANTALLA COMPLETA INMEDIATA Y DIRECTA (mientras el gesto de usuario está 100% fresco)
+      // 1. SOLICITAR PANTALLA COMPLETA DIRECTA (Primerísima acción en el clic directo)
       try {
         if (!isBrowserFullscreen()) {
           await requestBrowserFullscreen();
         }
       } catch (fsErr) {
-        console.warn('Fullscreen request deferred:', fsErr);
+        console.warn('Fullscreen diferido:', fsErr);
       }
 
       // 2. Activar Keyboard Lock API si está disponible
@@ -426,6 +409,19 @@
         btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"></path></svg> Iniciar Examen en Pantalla Completa`;
         errorDiv.innerText = 'Contraseña o PIN incorrecto. Por favor solicita la clave al profesor.';
         errorDiv.style.display = 'block';
+      }
+    });
+
+    // Permitir pulsar Enter en los inputs para activar el botón
+    ['studentName', 'studentId', 'studentPin'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('btnStartExam').click();
+          }
+        });
       }
     });
 
