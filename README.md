@@ -47,9 +47,9 @@ No necesitas pagar servidores ni configurar bases de datos:
    - `qrcode.min.js`
 4. En tu repositorio, entra a **Settings** (Configuración) > pestaña **Pages** (en el menú lateral izquierdo).
 5. En la sección **Branch**, selecciona `main` (o `master`) y la carpeta `/ (root)`, luego haz clic en **Save**.
-6. ¡Listo! En 1 minuto GitHub te dará tu enlace público:
-   - **Para configurar tus exámenes:** `https://tu-usuario.github.io/sistema-examenes/admin.html`
-   - **Enlace base de los alumnos:** `https://tu-usuario.github.io/sistema-examenes/index.html`
+6. ¡Listo! El sistema ya se encuentra desplegado y activo:
+   - **Para configurar tus exámenes (Docente):** `https://alvaropito.github.io/sistema-examenes/admin.html`
+   - **Portal de los alumnos:** `https://alvaropito.github.io/sistema-examenes/index.html` (o directamente `https://alvaropito.github.io/sistema-examenes/`)
 
 > **Nota:** Solo necesitas desplegar en GitHub **una sola vez**. Para cada nuevo examen o materia, solo entras a `admin.html` y generas el enlace nuevo con su propia contraseña.
 
