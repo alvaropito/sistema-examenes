@@ -103,6 +103,9 @@
           <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
           Supervisión Activa
         </span>
+        <button type="button" id="btnHudFullscreen" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; display: flex; align-items: center; gap: 4px;">
+          <span>⛶</span> Pantalla Completa
+        </button>
         <button type="button" id="btnFinishExam" class="btn btn-secondary" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;">
           Finalizar
         </button>
@@ -320,7 +323,7 @@
     function requestBrowserFullscreen() {
       const docEl = document.documentElement;
       if (docEl.requestFullscreen) {
-        return docEl.requestFullscreen();
+        return docEl.requestFullscreen({ navigationUI: 'hide' }).catch(() => docEl.requestFullscreen());
       } else if (docEl.webkitRequestFullscreen) {
         return docEl.webkitRequestFullscreen();
       } else if (docEl.mozRequestFullScreen) {
@@ -331,15 +334,30 @@
       return Promise.reject(new Error('Fullscreen no compatible con este navegador'));
     }
 
-    // Comprobar si el documento se encuentra en modo pantalla completa
+    // Comprobar si el documento se encuentra en modo pantalla completa (API estándar o F11)
     function isBrowserFullscreen() {
-      return !!(
+      const hasElement = !!(
         document.fullscreenElement ||
         document.webkitFullscreenElement ||
         document.mozFullScreenElement ||
         document.msFullscreenElement
       );
+      if (hasElement) return true;
+
+      // Detección por dimensiones físicas de pantalla (para cuando usan F11 del navegador)
+      const heightMatch = Math.abs(window.innerHeight - screen.height) <= 10;
+      const widthMatch = Math.abs(window.innerWidth - screen.width) <= 10;
+      return heightMatch && widthMatch;
     }
+
+    // Botón en la barra superior (HUD) para activar pantalla completa en cualquier momento
+    document.getElementById('btnHudFullscreen').addEventListener('click', async () => {
+      try {
+        await requestBrowserFullscreen();
+      } catch (e) {
+        alert('Puedes presionar la tecla F11 de tu teclado para activar Pantalla Completa.');
+      }
+    });
 
     // Manejador único del botón Iniciar Examen (100% directo al clic del usuario)
     document.getElementById('btnStartExam').addEventListener('click', async () => {
@@ -368,9 +386,7 @@
 
       // 1. SOLICITAR PANTALLA COMPLETA DIRECTA (Primerísima acción en el clic directo)
       try {
-        if (!isBrowserFullscreen()) {
-          await requestBrowserFullscreen();
-        }
+        await requestBrowserFullscreen();
       } catch (fsErr) {
         console.warn('Fullscreen diferido:', fsErr);
       }
@@ -461,16 +477,17 @@
       ExamState.isExamActive = true;
 
       // 6. FORZAR PANTALLA COMPLETA:
-      // Si por política del navegador aún no está en fullscreen, ocultar preguntas
-      // y presentar de inmediato el modal de pantalla completa obligatoria
+      // Esperar brevemente a que el navegador termine la animación de fullscreen
       const wrapper = document.getElementById('iframeWrapper');
-      if (!isBrowserFullscreen()) {
-        if (wrapper) wrapper.style.visibility = 'hidden';
-        document.getElementById('fullscreenEnforcerModal').classList.remove('hidden');
-      } else {
-        if (wrapper) wrapper.style.visibility = 'visible';
-        document.getElementById('fullscreenEnforcerModal').classList.add('hidden');
-      }
+      setTimeout(() => {
+        if (!isBrowserFullscreen()) {
+          if (wrapper) wrapper.style.visibility = 'hidden';
+          document.getElementById('fullscreenEnforcerModal').classList.remove('hidden');
+        } else {
+          if (wrapper) wrapper.style.visibility = 'visible';
+          document.getElementById('fullscreenEnforcerModal').classList.add('hidden');
+        }
+      }, 300);
 
       // 7. Activar motor de supervisión continua
       enableSupervisionEngine();
