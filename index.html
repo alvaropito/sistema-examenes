@@ -112,9 +112,40 @@
         id="examIframe" 
         class="exam-iframe" 
         src="about:blank"
-        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+        allowfullscreen="true"
+        webkitallowfullscreen="true"
+        mozallowfullscreen="true"
       ></iframe>
     </main>
+  </div>
+
+  <!-- ==========================================
+       PANTALLA: BLOQUEO POR FALTA DE PANTALLA COMPLETA (ENFORCER OBLIGATORIO)
+       ========================================== -->
+  <div id="fullscreenEnforcerModal" class="fullscreen-enforcer-overlay hidden">
+    <div class="fullscreen-enforcer-card">
+      <div style="font-size: 4rem; margin-bottom: 0.75rem;">🖥️</div>
+      <span class="badge" style="background: rgba(99,102,241,0.2); color: #818cf8; border-color: rgba(99,102,241,0.4); margin-bottom: 0.75rem;">
+        Modo Supervisado Activo
+      </span>
+      <h2 style="font-size: 1.8rem; color: #fff; margin-bottom: 0.5rem;">Pantalla Completa Obligatoria</h2>
+      <p style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.6;">
+        Para presentar tu examen y mantener la supervisión antifraude, este sistema <strong>exige estar en Pantalla Completa</strong>.<br>
+        Las preguntas permanecerán bloqueadas y ocultas hasta que actives la pantalla completa.
+      </p>
+
+      <button type="button" id="btnForceFullscreenNow" class="btn btn-primary btn-lg btn-block" style="font-size: 1.05rem; padding: 0.85rem 1.5rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+        </svg>
+        Entrar a Pantalla Completa para Continuar
+      </button>
+
+      <p class="form-hint" style="text-align: center; justify-content: center; margin-top: 1rem; color: #94a3b8;">
+        💡 Recuerda: si sales de pantalla completa durante el examen, se registrará una falta automática.
+      </p>
+    </div>
   </div>
 
   <!-- ==========================================
@@ -285,6 +316,41 @@
       }
     }
 
+    // Helper universal para solicitar pantalla completa en navegadores modernos y legados
+    function requestBrowserFullscreen() {
+      const docEl = document.documentElement;
+      if (docEl.requestFullscreen) {
+        return docEl.requestFullscreen();
+      } else if (docEl.webkitRequestFullscreen) {
+        return docEl.webkitRequestFullscreen();
+      } else if (docEl.mozRequestFullScreen) {
+        return docEl.mozRequestFullScreen();
+      } else if (docEl.msRequestFullscreen) {
+        return docEl.msRequestFullscreen();
+      }
+      return Promise.reject(new Error('Fullscreen no compatible con este navegador'));
+    }
+
+    // Comprobar si el documento se encuentra en modo pantalla completa
+    function isBrowserFullscreen() {
+      return !!(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+      );
+    }
+
+    // Disparar pantalla completa de forma inmediata y directa en el evento 'click' del usuario
+    // (Asegura el token de activación antes de que las promesas de descifrado expiren)
+    document.getElementById('btnStartExam').addEventListener('click', () => {
+      if (!isBrowserFullscreen()) {
+        requestBrowserFullscreen().catch((err) => {
+          console.log('Solicitud anticipada de fullscreen:', err);
+        });
+      }
+    });
+
     // Manejador del Formulario de Inicio
     document.getElementById('startExamForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -308,7 +374,15 @@
       if (!name || !id || !pin) {
         errorDiv.innerText = 'Por favor completa todos los campos requeridos.';
         errorDiv.style.display = 'block';
+        if (isBrowserFullscreen()) {
+          document.exitFullscreen().catch(() => {});
+        }
         return;
+      }
+
+      // Reintentar asegurar pantalla completa si aún no se ha activado
+      if (!isBrowserFullscreen()) {
+        requestBrowserFullscreen().catch(() => {});
       }
 
       const btn = document.getElementById('btnStartExam');
@@ -331,10 +405,13 @@
         ExamState.studentId = id;
         ExamState.maxStrikes = ExamState.config.strikes;
 
-        // Iniciar pantalla completa e iniciar examen
+        // Iniciar sesión de examen
         await launchExamSession();
       } catch (err) {
         console.error(err);
+        if (isBrowserFullscreen()) {
+          document.exitFullscreen().catch(() => {});
+        }
         btn.disabled = false;
         btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"></path></svg> Iniciar Examen en Pantalla Completa`;
         errorDiv.innerText = 'Contraseña o PIN incorrecto. Por favor solicita la clave al profesor.';
@@ -344,27 +421,13 @@
 
     // Iniciar la sesión de examen en pantalla completa
     async function launchExamSession() {
-      // 1. Solicitar pantalla completa nativa del navegador
-      try {
-        const docEl = document.documentElement;
-        if (docEl.requestFullscreen) {
-          await docEl.requestFullscreen();
-        } else if (docEl.webkitRequestFullscreen) {
-          await docEl.webkitRequestFullscreen();
-        } else if (docEl.msRequestFullscreen) {
-          await docEl.msRequestFullscreen();
+      // 1. Activar Keyboard Lock API si el navegador (Chrome/Edge) lo permite
+      if (navigator.keyboard && navigator.keyboard.lock) {
+        try {
+          await navigator.keyboard.lock(['Escape', 'Tab', 'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight']);
+        } catch (kErr) {
+          console.log('Keyboard lock denegado o no disponible:', kErr);
         }
-
-        // Activar Keyboard Lock API si el navegador (Chrome/Edge) lo permite
-        if (navigator.keyboard && navigator.keyboard.lock) {
-          try {
-            await navigator.keyboard.lock(['Escape', 'Tab', 'AltLeft', 'AltRight']);
-          } catch (kErr) {
-            console.log('Keyboard lock denegado o no disponible:', kErr);
-          }
-        }
-      } catch (err) {
-        console.warn('Fullscreen request bypassed or denied:', err);
       }
 
       // 2. Actualizar interfaz del HUD
@@ -386,12 +449,24 @@
       const iframe = document.getElementById('examIframe');
       iframe.src = ExamState.config.url;
 
-      // 5. Cambiar pantallas
+      // 5. Cambiar a pantalla de examen
       document.getElementById('authScreen').classList.add('hidden');
       document.getElementById('examScreen').classList.remove('hidden');
       ExamState.isExamActive = true;
 
-      // 6. Activar supervisión continua
+      // 6. FORZAR PANTALLA COMPLETA:
+      // Si por política del navegador aún no está en fullscreen, ocultar preguntas
+      // y presentar de inmediato el modal de pantalla completa obligatoria
+      const wrapper = document.getElementById('iframeWrapper');
+      if (!isBrowserFullscreen()) {
+        if (wrapper) wrapper.style.visibility = 'hidden';
+        document.getElementById('fullscreenEnforcerModal').classList.remove('hidden');
+      } else {
+        if (wrapper) wrapper.style.visibility = 'visible';
+        document.getElementById('fullscreenEnforcerModal').classList.add('hidden');
+      }
+
+      // 7. Activar motor de supervisión continua
       enableSupervisionEngine();
     }
 
@@ -547,17 +622,63 @@
           e.preventDefault();
         }
       });
+
+      // 6. Watchdog de Pantalla Completa Activa (Comprobación continua cada 400ms)
+      // Garantiza que es técnicamente imposible ver las preguntas si no se está en fullscreen
+      setInterval(() => {
+        if (ExamState.isExamActive && !ExamState.isPermanentlyLocked) {
+          if (!isBrowserFullscreen()) {
+            const wrapper = document.getElementById('iframeWrapper');
+            if (wrapper && wrapper.style.visibility !== 'hidden') {
+              wrapper.style.visibility = 'hidden';
+            }
+            if (!ExamState.isLockdownActive) {
+              const enforcer = document.getElementById('fullscreenEnforcerModal');
+              if (enforcer && enforcer.classList.contains('hidden')) {
+                enforcer.classList.remove('hidden');
+              }
+            }
+          }
+        }
+      }, 400);
     }
 
     // Manejador del cambio de estado de pantalla completa
     function handleFullscreenChange() {
-      const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement);
-      if (!isFull && ExamState.isExamActive && !ExamState.isPermanentlyLocked) {
-        const wrapper = document.getElementById('iframeWrapper');
-        if (wrapper) wrapper.style.visibility = 'hidden';
-        triggerSecurityInfraction('Salida del modo de Pantalla Completa (Esc o F11)');
+      const isFull = isBrowserFullscreen();
+      
+      if (isFull) {
+        // Entró en modo pantalla completa
+        if (ExamState.isExamActive && !ExamState.isLockdownActive && !ExamState.isPermanentlyLocked) {
+          document.getElementById('fullscreenEnforcerModal').classList.add('hidden');
+          const wrapper = document.getElementById('iframeWrapper');
+          if (wrapper) wrapper.style.visibility = 'visible';
+        }
+        if (navigator.keyboard && navigator.keyboard.lock) {
+          navigator.keyboard.lock(['Escape', 'Tab', 'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight']).catch(() => {});
+        }
+      } else {
+        // Salió de pantalla completa
+        if (ExamState.isExamActive && !ExamState.isPermanentlyLocked) {
+          const wrapper = document.getElementById('iframeWrapper');
+          if (wrapper) wrapper.style.visibility = 'hidden';
+          triggerSecurityInfraction('Salida del modo de Pantalla Completa (Esc o F11)');
+        }
       }
     }
+
+    // Botón del Enforcer para forzar pantalla completa
+    document.getElementById('btnForceFullscreenNow').addEventListener('click', async () => {
+      try {
+        await requestBrowserFullscreen();
+        if (navigator.keyboard && navigator.keyboard.lock) {
+          navigator.keyboard.lock(['Escape', 'Tab', 'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight']).catch(() => {});
+        }
+      } catch (err) {
+        console.warn('Error al activar pantalla completa:', err);
+        alert('Debes permitir el modo de Pantalla Completa en tu navegador para realizar el examen.');
+      }
+    });
 
     // Disparador de Infracción de Seguridad
     function triggerSecurityInfraction(reason) {
@@ -607,22 +728,24 @@
     // Botón para reanudar el examen tras una advertencia
     document.getElementById('btnResumeExam').addEventListener('click', async () => {
       try {
-        const docEl = document.documentElement;
-        if (docEl.requestFullscreen) {
-          await docEl.requestFullscreen();
-        } else if (docEl.webkitRequestFullscreen) {
-          await docEl.webkitRequestFullscreen();
-        }
+        await requestBrowserFullscreen();
       } catch (err) {
         console.warn('Re-enter fullscreen error:', err);
       }
 
-      // Restaurar visibilidad de las preguntas
-      const wrapper = document.getElementById('iframeWrapper');
-      if (wrapper) wrapper.style.visibility = 'visible';
-
-      document.getElementById('lockdownModal').classList.add('hidden');
-      ExamState.isLockdownActive = false;
+      setTimeout(() => {
+        if (isBrowserFullscreen()) {
+          const wrapper = document.getElementById('iframeWrapper');
+          if (wrapper) wrapper.style.visibility = 'visible';
+          document.getElementById('lockdownModal').classList.add('hidden');
+          ExamState.isLockdownActive = false;
+        } else {
+          // Si el navegador aún no restauró pantalla completa, mostrar el modal de pantalla completa obligatoria
+          document.getElementById('lockdownModal').classList.add('hidden');
+          ExamState.isLockdownActive = false;
+          document.getElementById('fullscreenEnforcerModal').classList.remove('hidden');
+        }
+      }, 150);
     });
 
     // Bloqueo definitivo e irrevocable (3 Strikes o límite superado)

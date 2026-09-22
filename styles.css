@@ -650,6 +650,33 @@ a:hover {
 }
 
 /* ===================================================
+   MODAL ENFORCER DE PANTALLA COMPLETA OBLIGATORIA
+   =================================================== */
+.fullscreen-enforcer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 12, 22, 0.98);
+  backdrop-filter: blur(25px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.fullscreen-enforcer-card {
+  max-width: 520px;
+  width: 100%;
+  background: #0f172a;
+  border: 2px solid var(--primary);
+  border-radius: var(--radius-xl);
+  padding: 2.5rem;
+  text-align: center;
+  box-shadow: 0 0 50px var(--primary-glow);
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* ===================================================
    UTILIDADES
    =================================================== */
 .hidden {
@@ -663,3 +690,4 @@ a:hover {
 .mt-4 { margin-top: 2rem; }
 .mb-1 { margin-bottom: 0.5rem; }
 .mb-2 { margin-bottom: 1rem; }
+
