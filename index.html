@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal de Examen Seguro | Modo Supervisado</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><text y='20' font-size='20'>🛡️</text></svg>">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ==========================================
+       PANTALLA 1: INGRESO Y VERIFICACIÓN DEL ESTUDIANTE
+       ========================================== -->
+  <div id="authScreen" class="auth-container">
+    <div class="auth-card">
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <span class="badge" id="examSubjectBadge">🎓 Examen Universitario</span>
+        <h1 id="displayExamTitle" style="font-size: 1.8rem; margin: 0.5rem 0 0.25rem;">Portal de Evaluación Segura</h1>
+        <p id="displayExamCourse" style="font-size: 0.95rem; color: var(--text-muted);">Verificación de Identidad del Estudiante</p>
+      </div>
+
+      <div id="manualPayloadSection" class="form-group hidden" style="background: rgba(99,102,241,0.08); padding: 1rem; border-radius: var(--radius-md); border: 1px dashed rgba(99,102,241,0.4);">
+        <label class="form-label" for="manualPayloadInput">Código Cifrado del Examen</label>
+        <input type="text" id="manualPayloadInput" class="form-input" placeholder="Pega el código generado si no entraste por enlace directo">
+      </div>
+
+      <form id="startExamForm">
+        <div class="form-group">
+          <label class="form-label" for="studentName">Nombre Completo (*)</label>
+          <input type="text" id="studentName" class="form-input" placeholder="Ej: Juan Sebastián Pérez" required autocomplete="name">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="studentId">Documento de Identidad / Código Universitario (*)</label>
+          <input type="text" id="studentId" class="form-input" placeholder="Ej: 1098765432" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="studentPin">Contraseña / PIN de Inicio del Examen (*)</label>
+          <input type="password" id="studentPin" class="form-input" placeholder="Ingresa la clave dada por el docente" required style="font-size: 1.1rem; letter-spacing: 0.1em;">
+          <div class="form-hint">
+            <span>🔑 Tu profesor te dará esta clave en el aula para descifrar el examen.</span>
+          </div>
+        </div>
+
+        <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; margin: 1.5rem 0;">
+          <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem;">Condiciones de Supervisión:</h4>
+          <ul style="list-style: none; font-size: 0.85rem; color: #cbd5e1; display: grid; gap: 0.4rem;">
+            <li>🖥️ El examen se abrirá obligatoriamente en <strong>Pantalla Completa</strong>.</li>
+            <li>🚫 Cambiar de ventana, presionar Alt+Tab o abrir otra pestaña <strong>será penalizado como falta</strong>.</li>
+            <li>⚠️ Al superar el número máximo de faltas, el examen se <strong>bloqueará de inmediato</strong>.</li>
+          </ul>
+        </div>
+
+        <div id="authError" class="form-hint" style="color: #f87171; font-weight: 600; margin-bottom: 1rem; display: none;"></div>
+
+        <button type="submit" id="btnStartExam" class="btn btn-primary btn-block btn-lg">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"></path></svg>
+          Iniciar Examen en Pantalla Completa
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       PANTALLA 2: ENTORNO ACTIVO DE EXAMEN (HUD + IFRAME)
+       ========================================== -->
+  <div id="examScreen" class="exam-layout hidden">
+    <!-- Barra Superior de Supervisión (HUD) -->
+    <header class="supervision-bar">
+      <div class="student-info">
+        <div class="avatar-badge" id="avatarInitial">E</div>
+        <div class="student-details">
+          <h4 id="hudStudentName">Estudiante</h4>
+          <span id="hudStudentId">ID: 00000000</span>
+        </div>
+      </div>
+
+      <div class="hud-center">
+        <!-- Temporizador -->
+        <div id="timerContainer" class="timer-pill">
+          <span>⏱️</span>
+          <span id="timerText">--:--</span>
+        </div>
+
+        <!-- Semáforo de Faltas -->
+        <div class="strikes-pill" title="Historial de infracciones por cambio de ventana">
+          <span>Faltas:</span>
+          <span id="strikesFraction" style="font-weight: 700; color: #cbd5e1;">0 / 3</span>
+          <div id="strikeDots" style="display: flex; gap: 4px; margin-left: 4px;"></div>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <span class="badge success" style="margin-bottom: 0;">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+          Supervisión Activa
+        </span>
+        <button type="button" id="btnFinishExam" class="btn btn-secondary" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;">
+          Finalizar
+        </button>
+      </div>
+    </header>
+
+    <!-- Contenedor del Formulario Embebido de Google Forms -->
+    <main class="iframe-container" id="iframeWrapper">
+      <iframe 
+        id="examIframe" 
+        class="exam-iframe" 
+        src="about:blank"
+        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+      ></iframe>
+    </main>
+  </div>
+
+  <!-- ==========================================
+       PANTALLA 3: ALERTA ROJA POR INFRACCIÓN (MODAL DE ADVERTENCIA)
+       ========================================== -->
+  <div id="lockdownModal" class="lockdown-overlay hidden">
+    <div class="lockdown-card">
+      <div class="alarm-icon">⚠️</div>
+      <h2 style="font-size: 1.8rem; color: #f87171; margin-bottom: 0.5rem;">¡Infracción Detectada!</h2>
+      <p style="color: #fca5a5; font-size: 1rem;">
+        Has intentado cambiar de ventana, presionar teclas de navegación o salir de la pantalla completa.
+      </p>
+
+      <div class="strike-notice">
+        <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 0.25rem;">
+          <span id="strikeModalBadge" style="color: #ef4444;">Falta acumulada: 1</span>
+          <span id="strikeModalLimit" style="color: #cbd5e1;">Límite permitido: 3</span>
+        </div>
+        <div id="lastInfractionReason" style="font-size: 0.85rem; color: #fecaca; margin-bottom: 0.5rem;"></div>
+        <div style="font-size: 0.75rem; color: #94a3b8;">Historial de incidentes:</div>
+        <ul id="incidentLogList" class="event-list"></ul>
+      </div>
+
+      <p style="font-size: 0.85rem; color: #e2e8f0; margin-bottom: 1.5rem;">
+        Para continuar con el examen, debes regresar inmediatamente a <strong>Pantalla Completa</strong>. Si alcanzas el límite de faltas, el examen será <strong>anulado automáticamente</strong>.
+      </p>
+
+      <button type="button" id="btnResumeExam" class="btn btn-danger btn-lg btn-block">
+        Reanudar y Volver a Pantalla Completa
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       PANTALLA 4: BLOQUEO DEFINITIVO POR LÍMITE DE FALTAS
+       ========================================== -->
+  <div id="permanentLockModal" class="permanent-lock-overlay hidden">
+    <div class="permanent-lock-card">
+      <div style="font-size: 4.5rem; margin-bottom: 0.5rem;">🚫</div>
+      <h2 style="font-size: 2.1rem; color: #ef4444; margin-bottom: 0.5rem;">Examen Bloqueado y Anulado</h2>
+      <p style="color: #fca5a5; font-size: 1.05rem;">
+        Se ha superado el número máximo de faltas permitidas por intento de cambio de pantalla o abandono del examen.
+      </p>
+
+      <div class="audit-box">
+        <div style="font-weight: bold; color: #fff; margin-bottom: 0.5rem; border-bottom: 1px solid #450a0a; padding-bottom: 0.3rem;">
+          Registro Oficial de Infracciones:
+        </div>
+        <div id="auditStudentInfo" style="margin-bottom: 0.5rem; color: #cbd5e1;"></div>
+        <div id="auditEventsList"></div>
+        <div style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px dashed #450a0a; font-size: 0.75rem; color: #a1a1aa;">
+          Código de Verificación Antifraude: <span id="auditSecurityHash" style="color: #f87171; word-break: break-all;"></span>
+        </div>
+      </div>
+
+      <p style="font-size: 0.9rem; color: #e2e8f0;">
+        ⚠️ El acceso a las preguntas ha sido revocado. Llama inmediatamente a tu profesor y muéstrale esta pantalla para registrar el informe.
+      </p>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       PANTALLA 5: EXAMEN COMPLETADO CON ÉXITO
+       ========================================== -->
+  <div id="finishedModal" class="auth-container hidden">
+    <div class="auth-card" style="text-align: center;">
+      <div style="font-size: 4rem; color: var(--success); margin-bottom: 1rem;">✅</div>
+      <span class="badge success">Evaluación Finalizada</span>
+      <h2 style="font-size: 1.8rem; margin: 0.5rem 0;">¡Examen Concluido!</h2>
+      <p style="margin-bottom: 1.5rem;">
+        Tu sesión ha finalizado. Si enviaste tus respuestas en el formulario de Google Forms, tu docente ya tiene tu entrega registrada.
+      </p>
+
+      <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem; text-align: left; font-size: 0.9rem;">
+        <div style="margin-bottom: 0.4rem;"><strong>Estudiante:</strong> <span id="summaryStudentName"></span></div>
+        <div style="margin-bottom: 0.4rem;"><strong>Documento / Código:</strong> <span id="summaryStudentId"></span></div>
+        <div style="margin-bottom: 0.4rem;"><strong>Faltas registradas:</strong> <span id="summaryStrikes" style="font-weight: bold; color: var(--success);">0 infracciones (Excelente)</span></div>
+      </div>
+
+      <p class="form-hint" style="text-align: center; justify-content: center;">
+        Ya puedes cerrar el navegador con seguridad.
+      </p>
+    </div>
+  </div>
+
+  <script src="crypto.js"></script>
+  <script>
+    /* ===================================================
+       CONTROLADOR DEL PORTAL DE EXAMEN SEGURO
+       =================================================== */
+
+    // Estado global de la sesión
+    const ExamState = {
+      payload: null,
+      config: null,
+      studentName: '',
+      studentId: '',
+      strikes: 0,
+      maxStrikes: 3,
+      incidentLog: [],
+      timerInterval: null,
+      timeRemainingSecs: 0,
+      isExamActive: false,
+      isLockdownActive: false,
+      isPermanentlyLocked: false,
+      audioCtx: null
+    };
+
+    // Sintetizador de alerta sonora de alta frecuencia (Web Audio API nativa sin archivos externos)
+    function playSecurityAlarm() {
+      try {
+        if (!ExamState.audioCtx) {
+          ExamState.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (ExamState.audioCtx.state === 'suspended') {
+          ExamState.audioCtx.resume();
+        }
+        
+        const now = ExamState.audioCtx.currentTime;
+        const osc = ExamState.audioCtx.createOscillator();
+        const gain = ExamState.audioCtx.createGain();
+        
+        osc.type = 'sawtooth';
+        // Frecuencia alternada de sirena
+        osc.frequency.setValueAtTime(850, now);
+        osc.frequency.exponentialRampToValueAtTime(450, now + 0.15);
+        osc.frequency.exponentialRampToValueAtTime(850, now + 0.3);
+        
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        
+        osc.connect(gain);
+        gain.connect(ExamState.audioCtx.destination);
+        
+        osc.start(now);
+        osc.stop(now + 0.45);
+      } catch (e) {
+        console.warn('Audio feedback error', e);
+      }
+    }
+
+    // Inicialización al cargar la página: buscar payload en la URL (#exam=...) o pre-cargado
+    function initPayload() {
+      let payload = null;
+
+      // 1. Verificar si fue inyectado en un archivo exportado
+      if (window.__PRELOADED_EXAM_PAYLOAD__) {
+        payload = window.__PRELOADED_EXAM_PAYLOAD__;
+      }
+
+      // 2. Verificar hash en la URL (#exam=... o #data=...)
+      if (!payload && window.location.hash) {
+        const hash = window.location.hash.substring(1);
+        const match = hash.match(/(?:exam|data)=([^&]+)/);
+        if (match && match[1]) {
+          payload = match[1];
+        } else if (hash.length > 20) {
+          payload = hash;
+        }
+      }
+
+      if (payload) {
+        ExamState.payload = payload;
+        document.getElementById('manualPayloadSection').classList.add('hidden');
+      } else {
+        // Permitir ingresar el payload manualmente si abrieron la página sin enlace
+        document.getElementById('manualPayloadSection').classList.remove('hidden');
+      }
+    }
+
+    // Manejador del Formulario de Inicio
+    document.getElementById('startExamForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errorDiv = document.getElementById('authError');
+      errorDiv.style.display = 'none';
+
+      // Tomar payload de input si no estaba en la URL
+      if (!ExamState.payload) {
+        ExamState.payload = document.getElementById('manualPayloadInput').value.trim();
+        if (!ExamState.payload) {
+          errorDiv.innerText = 'No se encontró la configuración del examen. Pega el código de examen.';
+          errorDiv.style.display = 'block';
+          return;
+        }
+      }
+
+      const name = document.getElementById('studentName').value.trim();
+      const id = document.getElementById('studentId').value.trim();
+      const pin = document.getElementById('studentPin').value.trim();
+
+      if (!name || !id || !pin) {
+        errorDiv.innerText = 'Por favor completa todos los campos requeridos.';
+        errorDiv.style.display = 'block';
+        return;
+      }
+
+      const btn = document.getElementById('btnStartExam');
+      btn.disabled = true;
+      btn.innerText = 'Verificando y descifrando...';
+
+      try {
+        // Descifrado con AES-GCM usando el PIN como clave
+        const config = await ExamCrypto.decryptData(ExamState.payload, pin);
+        
+        ExamState.config = {
+          url: config.u || config.url,
+          title: config.t || config.title,
+          course: config.c || config.course,
+          instructions: config.i || config.instructions,
+          duration: config.d !== undefined ? config.d : config.duration,
+          strikes: config.s !== undefined ? config.s : (config.strikes || 3)
+        };
+        ExamState.studentName = name;
+        ExamState.studentId = id;
+        ExamState.maxStrikes = ExamState.config.strikes;
+
+        // Iniciar pantalla completa e iniciar examen
+        await launchExamSession();
+      } catch (err) {
+        console.error(err);
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"></path></svg> Iniciar Examen en Pantalla Completa`;
+        errorDiv.innerText = 'Contraseña o PIN incorrecto. Por favor solicita la clave al profesor.';
+        errorDiv.style.display = 'block';
+      }
+    });
+
+    // Iniciar la sesión de examen en pantalla completa
+    async function launchExamSession() {
+      // 1. Solicitar pantalla completa nativa del navegador
+      try {
+        const docEl = document.documentElement;
+        if (docEl.requestFullscreen) {
+          await docEl.requestFullscreen();
+        } else if (docEl.webkitRequestFullscreen) {
+          await docEl.webkitRequestFullscreen();
+        } else if (docEl.msRequestFullscreen) {
+          await docEl.msRequestFullscreen();
+        }
+
+        // Activar Keyboard Lock API si el navegador (Chrome/Edge) lo permite
+        if (navigator.keyboard && navigator.keyboard.lock) {
+          try {
+            await navigator.keyboard.lock(['Escape', 'Tab', 'AltLeft', 'AltRight']);
+          } catch (kErr) {
+            console.log('Keyboard lock denegado o no disponible:', kErr);
+          }
+        }
+      } catch (err) {
+        console.warn('Fullscreen request bypassed or denied:', err);
+      }
+
+      // 2. Actualizar interfaz del HUD
+      document.getElementById('hudStudentName').innerText = ExamState.studentName;
+      document.getElementById('hudStudentId').innerText = `ID: ${ExamState.studentId}`;
+      document.getElementById('avatarInitial').innerText = ExamState.studentName.charAt(0).toUpperCase();
+
+      renderStrikeDots();
+
+      // 3. Configurar temporizador si existe
+      if (ExamState.config.duration && ExamState.config.duration > 0) {
+        ExamState.timeRemainingSecs = ExamState.config.duration * 60;
+        startCountdown();
+      } else {
+        document.getElementById('timerText').innerText = 'Ilimitado';
+      }
+
+      // 4. Cargar el Google Form en el iframe seguro
+      const iframe = document.getElementById('examIframe');
+      iframe.src = ExamState.config.url;
+
+      // 5. Cambiar pantallas
+      document.getElementById('authScreen').classList.add('hidden');
+      document.getElementById('examScreen').classList.remove('hidden');
+      ExamState.isExamActive = true;
+
+      // 6. Activar supervisión continua
+      enableSupervisionEngine();
+    }
+
+    // Dibujar semáforo de faltas
+    function renderStrikeDots() {
+      const container = document.getElementById('strikeDots');
+      container.innerHTML = '';
+      document.getElementById('strikesFraction').innerText = `${ExamState.strikes} / ${ExamState.maxStrikes}`;
+
+      for (let i = 0; i < ExamState.maxStrikes; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'strike-dot' + (i < ExamState.strikes ? ' active' : '');
+        container.appendChild(dot);
+      }
+    }
+
+    // Temporizador
+    function startCountdown() {
+      const timerText = document.getElementById('timerText');
+      const timerPill = document.getElementById('timerContainer');
+
+      function updateClock() {
+        if (ExamState.timeRemainingSecs <= 0) {
+          clearInterval(ExamState.timerInterval);
+          timerText.innerText = '00:00';
+          alert('⏰ El tiempo del examen ha terminado. Por favor envía tus respuestas en el formulario.');
+          return;
+        }
+
+        const mins = Math.floor(ExamState.timeRemainingSecs / 60);
+        const secs = ExamState.timeRemainingSecs % 60;
+        timerText.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+        if (ExamState.timeRemainingSecs <= 300) { // Menos de 5 mins
+          timerPill.classList.add('urgent');
+        }
+
+        ExamState.timeRemainingSecs--;
+      }
+
+      updateClock();
+      ExamState.timerInterval = setInterval(updateClock, 1000);
+    }
+
+    /* ===================================================
+       MOTOR DE SUPERVISIÓN Y DETECCIÓN ANTI-TRAMPAS
+       =================================================== */
+    let isAltPressed = false;
+
+    function enableSupervisionEngine() {
+      // 1. Detección de salida de Pantalla Completa
+      document.addEventListener('fullscreenchange', handleFullscreenChange);
+      document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+
+      // 2. Detección inmediata de cambio de pestaña o minimizado (Page Visibility API)
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden && ExamState.isExamActive && !ExamState.isPermanentlyLocked) {
+          // Ocultar preguntas al instante
+          const wrapper = document.getElementById('iframeWrapper');
+          if (wrapper) wrapper.style.visibility = 'hidden';
+          triggerSecurityInfraction('Cambio de pestaña o navegador minimizado detectado');
+        }
+      });
+
+      // 3. Detección instantánea de pérdida de foco (Alt+Tab, clic fuera, Windows Key)
+      window.addEventListener('blur', () => {
+        if (!ExamState.isExamActive || ExamState.isPermanentlyLocked || ExamState.isLockdownActive) return;
+        
+        // Comprobación rápida para no interferir con la interacción dentro del formulario
+        setTimeout(() => {
+          const activeEl = document.activeElement;
+          const iframe = document.getElementById('examIframe');
+          if (activeEl === iframe) {
+            // El usuario hizo clic legítimo dentro de las preguntas del formulario
+            return;
+          }
+          if (!document.hasFocus()) {
+            // Ocultar preguntas al instante para que no puedan verse
+            const wrapper = document.getElementById('iframeWrapper');
+            if (wrapper) wrapper.style.visibility = 'hidden';
+
+            const reason = isAltPressed 
+              ? 'Intento de cambio de ventana con Alt + Tab detectado' 
+              : 'Pérdida de foco del examen (clic fuera o cambio de aplicación)';
+            triggerSecurityInfraction(reason);
+          }
+        }, 50);
+      });
+
+      // 4. Bloqueo de atajos de teclado y rastreo de tecla Alt
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Alt') {
+          isAltPressed = true;
+        }
+
+        if (!ExamState.isExamActive) return;
+
+        // Si intentan Alt + Tab o Alt + Flecha
+        if (e.altKey && e.key === 'Tab') {
+          e.preventDefault();
+          const wrapper = document.getElementById('iframeWrapper');
+          if (wrapper) wrapper.style.visibility = 'hidden';
+          triggerSecurityInfraction('Combinación Alt + Tab detectada');
+          return;
+        }
+
+        // F12 (DevTools)
+        if (e.key === 'F12') {
+          e.preventDefault();
+          e.stopPropagation();
+          triggerSecurityInfraction('Intento de abrir herramientas de desarrollo (F12)');
+          return;
+        }
+
+        // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C (DevTools)
+        if (e.ctrlKey && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key)) {
+          e.preventDefault();
+          e.stopPropagation();
+          triggerSecurityInfraction('Atajo de inspección bloqueado');
+          return;
+        }
+
+        // Ctrl+U (Ver código fuente)
+        if (e.ctrlKey && ['u', 'U'].includes(e.key)) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+
+        // Ctrl+C, Ctrl+V, Ctrl+P (Copiar, Pegar, Imprimir)
+        if (e.ctrlKey && ['c', 'C', 'v', 'V', 'p', 'P'].includes(e.key)) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+
+        // Alt + Flecha (Atrás/Adelante de navegador)
+        if (e.altKey && ['ArrowLeft', 'ArrowRight'].includes(e.key)) {
+          e.preventDefault();
+          return;
+        }
+      }, true);
+
+      window.addEventListener('keyup', (e) => {
+        if (e.key === 'Alt') {
+          isAltPressed = false;
+        }
+      }, true);
+
+      // 5. Bloqueo de Clic Derecho (Menú contextual)
+      document.addEventListener('contextmenu', (e) => {
+        if (ExamState.isExamActive) {
+          e.preventDefault();
+        }
+      });
+    }
+
+    // Manejador del cambio de estado de pantalla completa
+    function handleFullscreenChange() {
+      const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      if (!isFull && ExamState.isExamActive && !ExamState.isPermanentlyLocked) {
+        const wrapper = document.getElementById('iframeWrapper');
+        if (wrapper) wrapper.style.visibility = 'hidden';
+        triggerSecurityInfraction('Salida del modo de Pantalla Completa (Esc o F11)');
+      }
+    }
+
+    // Disparador de Infracción de Seguridad
+    function triggerSecurityInfraction(reason) {
+      if (!ExamState.isExamActive || ExamState.isPermanentlyLocked) return;
+
+      ExamState.strikes++;
+      const timeStr = new Date().toLocaleTimeString();
+      const entry = `[${timeStr}] ${reason}`;
+      ExamState.incidentLog.push(entry);
+
+      // Emitir alarma sonora
+      playSecurityAlarm();
+
+      renderStrikeDots();
+
+      // ¿Superó el límite de faltas?
+      if (ExamState.strikes >= ExamState.maxStrikes) {
+        executePermanentLockout();
+      } else {
+        showLockdownModal(reason);
+      }
+    }
+
+    // Mostrar modal temporal de advertencia roja
+    function showLockdownModal(reason) {
+      ExamState.isLockdownActive = true;
+      
+      // Ocultar inmediatamente las preguntas
+      const wrapper = document.getElementById('iframeWrapper');
+      if (wrapper) wrapper.style.visibility = 'hidden';
+
+      document.getElementById('lastInfractionReason').innerText = `Motivo: ${reason}`;
+      document.getElementById('strikeModalBadge').innerText = `Falta acumulada: ${ExamState.strikes}`;
+      document.getElementById('strikeModalLimit').innerText = `Límite permitido: ${ExamState.maxStrikes}`;
+
+      const listEl = document.getElementById('incidentLogList');
+      listEl.innerHTML = '';
+      ExamState.incidentLog.forEach(log => {
+        const li = document.createElement('li');
+        li.innerText = log;
+        listEl.appendChild(li);
+      });
+
+      document.getElementById('lockdownModal').classList.remove('hidden');
+    }
+
+    // Botón para reanudar el examen tras una advertencia
+    document.getElementById('btnResumeExam').addEventListener('click', async () => {
+      try {
+        const docEl = document.documentElement;
+        if (docEl.requestFullscreen) {
+          await docEl.requestFullscreen();
+        } else if (docEl.webkitRequestFullscreen) {
+          await docEl.webkitRequestFullscreen();
+        }
+      } catch (err) {
+        console.warn('Re-enter fullscreen error:', err);
+      }
+
+      // Restaurar visibilidad de las preguntas
+      const wrapper = document.getElementById('iframeWrapper');
+      if (wrapper) wrapper.style.visibility = 'visible';
+
+      document.getElementById('lockdownModal').classList.add('hidden');
+      ExamState.isLockdownActive = false;
+    });
+
+    // Bloqueo definitivo e irrevocable (3 Strikes o límite superado)
+    async function executePermanentLockout() {
+      ExamState.isPermanentlyLocked = true;
+      ExamState.isExamActive = false;
+
+      // Ocultar modal temporal si estaba abierto
+      document.getElementById('lockdownModal').classList.add('hidden');
+
+      // Destruir el iframe de Google Forms para que no sigan contestando
+      const iframe = document.getElementById('examIframe');
+      iframe.src = 'about:blank';
+      iframe.remove();
+
+      // Detener temporizador
+      if (ExamState.timerInterval) {
+        clearInterval(ExamState.timerInterval);
+      }
+
+      // Preparar informe de auditoría
+      document.getElementById('auditStudentInfo').innerHTML = `
+        <strong>Alumno:</strong> ${ExamState.studentName} | <strong>ID:</strong> ${ExamState.studentId}<br>
+        <strong>Total de Infracciones:</strong> ${ExamState.strikes} de ${ExamState.maxStrikes}
+      `;
+
+      const auditEvents = document.getElementById('auditEventsList');
+      auditEvents.innerHTML = '';
+      ExamState.incidentLog.forEach(log => {
+        const div = document.createElement('div');
+        div.innerText = log;
+        auditEvents.appendChild(div);
+      });
+
+      // Generar Hash criptográfico de verificación antifraude
+      const rawReport = `${ExamState.studentId}-${ExamState.studentName}-${ExamState.strikes}-${ExamState.incidentLog.join('|')}`;
+      const encoder = new TextEncoder();
+      const hashBuffer = await window.crypto.subtle.digest('SHA-256', encoder.encode(rawReport));
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      document.getElementById('auditSecurityHash').innerText = hashHex.substring(0, 32).toUpperCase();
+
+      // Mostrar pantalla de expulsión definitiva
+      document.getElementById('permanentLockModal').classList.remove('hidden');
+    }
+
+    // Botón de finalización voluntaria del examen
+    document.getElementById('btnFinishExam').addEventListener('click', () => {
+      const confirmFinish = confirm('¿Estás seguro de que ya hiciste clic en "ENVIAR" dentro del formulario de Google Forms y deseas salir del examen?');
+      if (confirmFinish) {
+        ExamState.isExamActive = false;
+        if (ExamState.timerInterval) clearInterval(ExamState.timerInterval);
+
+        // Salir de pantalla completa si está activa
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        }
+
+        // Ocultar examen y mostrar pantalla de finalización
+        document.getElementById('examScreen').classList.add('hidden');
+        document.getElementById('summaryStudentName').innerText = ExamState.studentName;
+        document.getElementById('summaryStudentId').innerText = ExamState.studentId;
+
+        const strikesEl = document.getElementById('summaryStrikes');
+        if (ExamState.strikes === 0) {
+          strikesEl.innerText = '0 infracciones (Excelente conducta)';
+          strikesEl.style.color = 'var(--success)';
+        } else {
+          strikesEl.innerText = `${ExamState.strikes} infracciones registradas`;
+          strikesEl.style.color = 'var(--warning)';
+        }
+
+        document.getElementById('finishedModal').classList.remove('hidden');
+      }
+    });
+
+    // Inicializar al cargar
+    window.addEventListener('DOMContentLoaded', () => {
+      initPayload();
+    });
+  </script>
+</body>
+</html>

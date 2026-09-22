@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel del Profesor | Configuración de Examen Seguro</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><text y='20' font-size='20'>🛡️</text></svg>">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="admin-container">
+    <!-- Encabezado -->
+    <header class="page-header">
+      <div class="badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        Seguridad AES-GCM 256-bit &bull; Modo Supervisado
+      </div>
+      <h1 class="page-title">Configurador de Examen Seguro</h1>
+      <p class="page-subtitle">Convierte tu formulario de Google Forms en un examen blindado contra cambios de pantalla, listo para GitHub Pages o uso local sin instalar nada.</p>
+    </header>
+
+    <div class="admin-grid">
+      <!-- Columna 1: Configuración General -->
+      <section class="glass-panel">
+        <div class="panel-header">
+          <div class="panel-icon">📝</div>
+          <h2 class="panel-title">1. Datos del Examen</h2>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="formUrl">Enlace de Google Forms (*)</label>
+          <input type="url" id="formUrl" class="form-input" placeholder="https://docs.google.com/forms/d/e/.../viewform" required>
+          <div class="form-hint">
+            <span>💡 Pega cualquier enlace de tu Google Form. El sistema lo adaptará para embebido automáticamente.</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="examTitle">Título del Examen (*)</label>
+          <input type="text" id="examTitle" class="form-input" placeholder="Ej: Parcial 1 - Cálculo Diferencial" value="Examen Parcial">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="courseName">Materia / Grupo</label>
+          <input type="text" id="courseName" class="form-input" placeholder="Ej: Grupo 102 - Semestre I" value="Universidad">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="instructions">Instrucciones para el Alumno</label>
+          <textarea id="instructions" class="form-textarea" rows="3">Este examen se ejecuta en modo pantalla completa. Cualquier intento de cambiar de ventana, abrir pestañas, presionar Alt+Tab o salir de pantalla completa será registrado y causará el bloqueo inmediato del examen.</textarea>
+        </div>
+      </section>
+
+      <!-- Columna 2: Reglas de Seguridad & Bloqueo -->
+      <section class="glass-panel">
+        <div class="panel-header">
+          <div class="panel-icon">🛡️</div>
+          <h2 class="panel-title">2. Políticas Anti-Trampas</h2>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="examPin">Contraseña / PIN de Desbloqueo (*)</label>
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="text" id="examPin" class="form-input" placeholder="Ej: Matematica2026" style="font-weight: 700; letter-spacing: 0.05em;">
+            <button type="button" id="btnGenPin" class="btn btn-secondary" title="Generar PIN aleatorio">🎲 Generar</button>
+          </div>
+          <div class="form-hint">
+            <span>🔒 Esta clave cifra el enlace de Google Forms. Dásela a tus alumnos en el aula justo al empezar la prueba.</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="durationMinutes">Tiempo Límite (Minutos)</label>
+          <input type="number" id="durationMinutes" class="form-input" min="0" max="300" value="60">
+          <div class="form-hint">
+            <span>Coloca 0 para tiempo ilimitado. Si se asigna tiempo, se mostrará un reloj con aviso sonoro al final.</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="maxStrikes">Límite de Faltas / Intentos Permitidos</label>
+          <select id="maxStrikes" class="form-select">
+            <option value="1">1 intento (Tolerancia Cero - Bloqueo al primer cambio de pantalla)</option>
+            <option value="2">2 intentos (1 advertencia y al segundo se bloquea)</option>
+            <option value="3" selected>3 intentos (2 advertencias previas - RECOMENDADO)</option>
+            <option value="5">5 intentos (Modo flexible)</option>
+          </select>
+          <div class="form-hint">
+            <span>Infracciones: presionar Alt+Tab, salir de pantalla completa o cambiar de pestaña.</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Protecciones Automáticas Activadas:</label>
+          <ul style="list-style: none; font-size: 0.85rem; color: var(--text-muted); display: grid; gap: 0.4rem;">
+            <li>✅ Pantalla Completa forzada al inicio</li>
+            <li>✅ Detección instantánea de pérdida de foco (Alt+Tab / Windows)</li>
+            <li>✅ Bloqueo de Clic Derecho e Inspeccionar Elemento (F12)</li>
+            <li>✅ Bloqueo de atajos de copia y pegado (Ctrl+C, Ctrl+V)</li>
+            <li>✅ Cifrado en memoria: la URL del Formulario no viaja en texto plano</li>
+          </ul>
+        </div>
+      </section>
+    </div>
+
+    <!-- Botón de Generación -->
+    <div style="text-align: center; margin-top: 1rem;">
+      <button type="button" id="btnGenerate" class="btn btn-primary btn-lg" style="min-width: 320px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+        Generar Enlace Seguro de Examen
+      </button>
+    </div>
+
+    <!-- Panel de Resultados (Oculto inicialmente) -->
+    <div id="resultPanel" class="result-card hidden">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <span class="badge success">✨ Examen Configurado con Éxito</span>
+          <h3 style="font-size: 1.4rem; margin-top: 0.25rem;">Enlace Blindado para tus Estudiantes</h3>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="button" id="btnTestStudent" class="btn btn-secondary">
+            🚀 Probar como Alumno
+          </button>
+          <button type="button" id="btnDownloadHtml" class="btn btn-secondary" title="Descargar como archivo html para enviar por correo o USB">
+            💾 Descargar archivo .HTML
+          </button>
+        </div>
+      </div>
+
+      <p style="margin-top: 0.75rem;">Comparte este enlace a tus alumnos o proyéctalo en la pantalla del salón. Nadie podrá abrir el examen hasta que des el PIN de acceso.</p>
+
+      <div class="link-box">
+        <input type="text" id="generatedUrl" class="link-input" readonly>
+        <button type="button" id="btnCopyLink" class="btn btn-primary" style="padding: 0.5rem 1.2rem; font-size: 0.85rem;">
+          📋 Copiar Enlace
+        </button>
+      </div>
+
+      <!-- Contenedor Código QR -->
+      <div style="display: flex; flex-direction: column; align-items: center; margin-top: 1.5rem;">
+        <div class="qr-container">
+          <div id="qrcode"></div>
+          <div class="qr-caption">Código QR para proyectar en el aula</div>
+        </div>
+        <p class="form-hint" style="text-align: center; max-width: 480px;">
+          💡 En el aula de computadores: puedes escribir el enlace corto en el tablero o hacer que lo abran desde el navegador de cada PC.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="crypto.js"></script>
+  <script src="qrcode.min.js"></script>
+  <script>
+    // Generar un PIN aleatorio por defecto
+    function generateRandomPin() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let pin = '';
+      for (let i = 0; i < 6; i++) {
+        pin += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return pin;
+    }
+
+    document.getElementById('btnGenPin').addEventListener('click', () => {
+      document.getElementById('examPin').value = generateRandomPin();
+    });
+
+    // Formatear enlace de Google Forms para que funcione como embedded
+    function sanitizeGoogleFormUrl(rawUrl) {
+      let url = rawUrl.trim();
+      if (!url) return '';
+
+      // Si es un enlace de edición o respuesta general, convertirlo a viewform
+      if (url.includes('docs.google.com/forms')) {
+        // Remover /edit o parámetros previos
+        url = url.replace(/\/edit.*$/, '/viewform');
+        if (!url.includes('/viewform')) {
+          url = url.replace(/\/$/, '') + '/viewform';
+        }
+        // Asegurar el parámetro embedded=true
+        if (!url.includes('embedded=true')) {
+          url += (url.includes('?') ? '&' : '?') + 'embedded=true';
+        }
+      }
+      return url;
+    }
+
+    let qrCodeInstance = null;
+    let currentPayload = '';
+    let currentFullUrl = '';
+
+    // Manejador del botón Generar
+    document.getElementById('btnGenerate').addEventListener('click', async () => {
+      const rawUrl = document.getElementById('formUrl').value;
+      const title = document.getElementById('examTitle').value.trim() || 'Examen';
+      const course = document.getElementById('courseName').value.trim();
+      const instructions = document.getElementById('instructions').value.trim();
+      const pin = document.getElementById('examPin').value.trim();
+      const duration = parseInt(document.getElementById('durationMinutes').value, 10) || 0;
+      const strikes = parseInt(document.getElementById('maxStrikes').value, 10) || 3;
+
+      if (!rawUrl) {
+        alert('Por favor ingresa el enlace de tu Google Form');
+        document.getElementById('formUrl').focus();
+        return;
+      }
+
+      if (!pin) {
+        alert('Por favor ingresa o genera una contraseña/PIN para el examen');
+        document.getElementById('examPin').focus();
+        return;
+      }
+
+      const formUrl = sanitizeGoogleFormUrl(rawUrl);
+
+      // Objeto de configuración a cifrar con claves compactas para optimizar tamaño
+      const examConfig = {
+        u: formUrl,
+        t: title,
+        c: course,
+        i: instructions,
+        d: duration,
+        s: strikes
+      };
+
+      try {
+        // Cifrado militar con AES-GCM usando el PIN como llave
+        currentPayload = await ExamCrypto.encryptData(examConfig, pin);
+
+        // Construir la URL absoluta hacia index.html
+        const currentLoc = window.location.href;
+        let baseUrl = currentLoc.substring(0, currentLoc.lastIndexOf('/')) + '/index.html';
+        
+        // Si no estamos en un servidor (file://), construir relativo
+        if (!baseUrl.startsWith('http')) {
+          baseUrl = 'index.html';
+        }
+
+        currentFullUrl = baseUrl + '#exam=' + currentPayload;
+
+        // Mostrar en el input
+        document.getElementById('generatedUrl').value = currentFullUrl;
+
+        // Generar Código QR con la librería completa qrcode-generator
+        const qrEl = document.getElementById('qrcode');
+        qrEl.innerHTML = '';
+        const qr = qrcode(0, 'M');
+        qr.addData(currentFullUrl);
+        qr.make();
+        qrEl.innerHTML = qr.createSvgTag({ cellSize: 3, margin: 4, scalable: true });
+
+        // Mostrar panel con animación
+        const resultPanel = document.getElementById('resultPanel');
+        resultPanel.classList.remove('hidden');
+        resultPanel.scrollIntoView({ behavior: 'smooth' });
+
+      } catch (err) {
+        console.error(err);
+        alert('Error al cifrar los datos del examen: ' + err.message);
+      }
+    });
+
+    // Copiar enlace al portapapeles
+    document.getElementById('btnCopyLink').addEventListener('click', async () => {
+      const input = document.getElementById('generatedUrl');
+      try {
+        await navigator.clipboard.writeText(input.value);
+        const originalText = document.getElementById('btnCopyLink').innerText;
+        document.getElementById('btnCopyLink').innerText = '✅ ¡Copiado!';
+        setTimeout(() => {
+          document.getElementById('btnCopyLink').innerText = originalText;
+        }, 2000);
+      } catch (e) {
+        input.select();
+        document.execCommand('copy');
+        alert('Enlace copiado al portapapeles');
+      }
+    });
+
+    // Probar vista del estudiante en una nueva pestaña
+    document.getElementById('btnTestStudent').addEventListener('click', () => {
+      if (currentFullUrl) {
+        window.open(currentFullUrl, '_blank');
+      }
+    });
+
+    // Descargar como archivo HTML autocontenido para llevar en USB o enviar por correo
+    document.getElementById('btnDownloadHtml').addEventListener('click', async () => {
+      if (!currentPayload) return;
+      try {
+        // Obtenemos el contenido de index.html
+        const res = await fetch('index.html');
+        let indexHtml = await res.text();
+        
+        // Inyectar el payload por defecto en el HTML descargado
+        const injection = `<script>window.__PRELOADED_EXAM_PAYLOAD__ = "${currentPayload}";<\/script>`;
+        indexHtml = indexHtml.replace('</head>', injection + '\n</head>');
+
+        const blob = new Blob([indexHtml], { type: 'text/html;charset=utf-8' });
+        const downloadUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `Examen_${document.getElementById('examTitle').value.replace(/\s+/g, '_')}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(downloadUrl);
+      } catch (err) {
+        alert('Para descargar el archivo individual, asegúrate de estar ejecutando en un servidor local o simplemente comparte el enlace generado.');
+      }
+    });
+
+    // Inicializar con un PIN por defecto
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('examPin').value = generateRandomPin();
+    });
+  </script>
+</body>
+</html>
