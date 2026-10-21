@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,18 +8,20 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Portal de Examen Seguro | Modo Supervisado</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>">
   <link rel="stylesheet" href="styles.css?v=20261020c">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script>
-    (function() {
+    (function () {
       const theme = localStorage.getItem('app-theme') || 'light';
       document.documentElement.setAttribute('data-theme', theme);
     })();
   </script>
 </head>
+
 <body>
 
   <!-- ==========================================
@@ -29,30 +32,33 @@
       <div style="display: flex; justify-content: flex-end; margin-bottom: 0.5rem;">
         <button type="button" class="theme-toggle-btn" id="themeToggleBtnAuth" title="Cambiar a Modo Claro / Oscuro">
           <span class="theme-toggle-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
           </span>
           <span class="theme-toggle-text">Modo Oscuro</span>
         </button>
       </div>
 
       <div style="text-align: center; margin-bottom: 2rem;">
-        <span class="badge" id="examSubjectBadge">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
-          Examen Universitario
-        </span>
-        <h1 id="displayExamTitle" style="font-size: 1.8rem; margin: 0.5rem 0 0.25rem;">Portal de Evaluación Segura</h1>
-        <p id="displayExamCourse" style="font-size: 0.95rem; color: var(--text-muted);">Verificación de Identidad del Estudiante</p>
+        <h1 id="displayExamTitle" style="font-size: 1.8rem; margin: 0.5rem 0 0.25rem;">Portal de Evaluación</h1>
+        <p id="displayExamCourse" style="font-size: 0.95rem; color: var(--text-muted);">Verificación de Identidad del
+          Estudiante</p>
       </div>
 
-      <div id="manualPayloadSection" class="form-group hidden" style="background: var(--primary-light); padding: 1rem; border-radius: var(--radius-md); border: 1px dashed rgba(79,70,229,0.4);">
+      <div id="manualPayloadSection" class="form-group hidden"
+        style="background: var(--primary-light); padding: 1rem; border-radius: var(--radius-md); border: 1px dashed rgba(79,70,229,0.4);">
         <label class="form-label" for="manualPayloadInput">Código Cifrado del Examen</label>
-        <input type="text" id="manualPayloadInput" class="form-input" placeholder="Pega el código generado si no entraste por enlace directo">
+        <input type="text" id="manualPayloadInput" class="form-input"
+          placeholder="Pega el código generado si no entraste por enlace directo">
       </div>
 
       <form id="startExamForm">
         <div class="form-group">
           <label class="form-label" for="studentName">Nombre Completo (*)</label>
-          <input type="text" id="studentName" class="form-input" placeholder="Ej: Juan Sebastián Pérez" required autocomplete="name">
+          <input type="text" id="studentName" class="form-input" placeholder="Ej: Juan Sebastián Pérez" required
+            autocomplete="name">
         </div>
 
         <div class="form-group">
@@ -62,26 +68,53 @@
 
         <div class="form-group">
           <label class="form-label" for="studentPin">Contraseña / PIN de Inicio del Examen (*)</label>
-          <input type="password" id="studentPin" class="form-input" placeholder="Ingresa la clave dada por el docente" required style="font-size: 1.1rem; letter-spacing: 0.1em;">
+          <input type="password" id="studentPin" class="form-input" placeholder="Ingresa la clave dada por el docente"
+            required style="font-size: 1.1rem; letter-spacing: 0.1em;">
           <div class="form-hint">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
             <span>Tu profesor te dará esta clave en el aula para descifrar el examen.</span>
           </div>
         </div>
 
         <div class="info-box">
-          <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-headings); margin-bottom: 0.5rem;">Condiciones de Supervisión:</h4>
+          <h4
+            style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-headings); margin-bottom: 0.5rem;">
+            Condiciones de Supervisión:</h4>
           <ul style="list-style: none; font-size: 0.85rem; color: var(--text-muted); display: grid; gap: 0.5rem;">
-            <li style="display: flex; align-items: center; gap: 0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg> El examen se abrirá obligatoriamente en <strong>Pantalla Completa</strong>.</li>
-            <li style="display: flex; align-items: center; gap: 0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg> Cambiar de ventana, presionar Alt+Tab o abrir otra pestaña <strong>será penalizado como falta</strong>.</li>
-            <li style="display: flex; align-items: center; gap: 0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Al superar el número máximo de faltas, el examen se <strong>bloqueará de inmediato</strong>.</li>
+            <li style="display: flex; align-items: center; gap: 0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24"
+                fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg> El examen se abrirá obligatoriamente en <strong>Pantalla Completa</strong>.</li>
+            <li style="display: flex; align-items: center; gap: 0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24"
+                fill="none" stroke="var(--warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+              </svg> Cambiar de ventana, presionar Alt+Tab o abrir otra pestaña <strong>será penalizado como
+                falta</strong>.</li>
+            <li style="display: flex; align-items: center; gap: 0.5rem;"><svg width="14" height="14" viewBox="0 0 24 24"
+                fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                </path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg> Al superar el número máximo de faltas, el examen se <strong>bloqueará de inmediato</strong>.</li>
           </ul>
         </div>
 
-        <div id="authError" class="form-hint" style="color: var(--danger); font-weight: 600; margin-bottom: 1rem; display: none;"></div>
+        <div id="authError" class="form-hint"
+          style="color: var(--danger); font-weight: 600; margin-bottom: 1rem; display: none;"></div>
 
         <button type="button" id="btnStartExam" class="btn btn-primary btn-block btn-lg">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
           Iniciar Examen en Pantalla Completa
         </button>
       </form>
@@ -105,7 +138,11 @@
       <div class="hud-center">
         <!-- Temporizador -->
         <div id="timerContainer" class="timer-pill">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
           <span id="timerText">--:--</span>
         </div>
 
@@ -119,19 +156,30 @@
 
       <div style="display: flex; align-items: center; gap: 0.6rem;">
         <span class="badge success" style="margin-bottom: 0;">
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--success); display: inline-block;"></span>
+          <span
+            style="width: 8px; height: 8px; border-radius: 50%; background: var(--success); display: inline-block;"></span>
           Supervisión Activa
         </span>
-        <button type="button" id="btnHudThemeToggle" class="btn btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.85rem;" title="Cambiar Tema (Claro / Oscuro)">
+        <button type="button" id="btnHudThemeToggle" class="btn btn-secondary"
+          style="padding: 0.35rem 0.65rem; font-size: 0.85rem;" title="Cambiar Tema (Claro / Oscuro)">
           <span class="theme-hud-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
           </span>
         </button>
-        <button type="button" id="btnHudFullscreen" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+        <button type="button" id="btnHudFullscreen" class="btn btn-primary"
+          style="padding: 0.35rem 0.75rem; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3">
+            </path>
+          </svg>
           Pantalla Completa
         </button>
-        <button type="button" id="btnFinishExam" class="btn btn-secondary" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;">
+        <button type="button" id="btnFinishExam" class="btn btn-secondary"
+          style="padding: 0.4rem 0.9rem; font-size: 0.85rem;">
           Finalizar
         </button>
       </div>
@@ -139,12 +187,8 @@
 
     <!-- Contenedor del Formulario Embebido de Google Forms -->
     <main class="iframe-container" id="iframeWrapper">
-      <iframe 
-        id="examIframe" 
-        class="exam-iframe" 
-        src="about:blank"
-        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-      ></iframe>
+      <iframe id="examIframe" class="exam-iframe" src="about:blank"
+        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen"></iframe>
     </main>
   </div>
 
@@ -154,26 +198,42 @@
   <div id="fullscreenEnforcerModal" class="fullscreen-enforcer-overlay hidden">
     <div class="fullscreen-enforcer-card">
       <div class="modal-hero-icon primary">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
       </div>
-      <span class="badge" style="background: var(--primary-light); color: var(--primary-text); border-color: rgba(79,70,229,0.3); margin-bottom: 0.75rem;">
+      <span class="badge"
+        style="background: var(--primary-light); color: var(--primary-text); border-color: rgba(79,70,229,0.3); margin-bottom: 0.75rem;">
         Modo Supervisado Activo
       </span>
-      <h2 style="font-size: 1.8rem; color: var(--text-headings); margin-bottom: 0.5rem;">Pantalla Completa Obligatoria</h2>
+      <h2 style="font-size: 1.8rem; color: var(--text-headings); margin-bottom: 0.5rem;">Pantalla Completa Obligatoria
+      </h2>
       <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.6;">
-        Para presentar tu examen y mantener la supervisión antifraude, este sistema <strong>exige estar en Pantalla Completa</strong>.<br>
+        Para presentar tu examen y mantener la supervisión antifraude, este sistema <strong>exige estar en Pantalla
+          Completa</strong>.<br>
         Las preguntas permanecerán bloqueadas y ocultas hasta que actives la pantalla completa.
       </p>
 
-      <button type="button" id="btnForceFullscreenNow" class="btn btn-primary btn-lg btn-block" style="font-size: 1.05rem; padding: 0.85rem 1.5rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+      <button type="button" id="btnForceFullscreenNow" class="btn btn-primary btn-lg btn-block"
+        style="font-size: 1.05rem; padding: 0.85rem 1.5rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3">
+          </path>
         </svg>
         Entrar a Pantalla Completa para Continuar
       </button>
 
       <p class="form-hint" style="text-align: center; justify-content: center; margin-top: 1rem;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
         <span>Recuerda: si sales de pantalla completa durante el examen, se registrará una falta automática.</span>
       </p>
     </div>
@@ -185,7 +245,12 @@
   <div id="lockdownModal" class="lockdown-overlay hidden">
     <div class="lockdown-card">
       <div class="alarm-icon">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
       </div>
       <h2 style="font-size: 1.8rem; color: var(--danger); margin-bottom: 0.5rem;">¡Infracción Detectada!</h2>
       <p style="color: var(--text-muted); font-size: 1rem;">
@@ -197,13 +262,15 @@
           <span id="strikeModalBadge" style="color: var(--danger); font-weight: 700;">Falta acumulada: 1</span>
           <span id="strikeModalLimit" style="color: var(--text-subtle);">Límite permitido: 3</span>
         </div>
-        <div id="lastInfractionReason" style="font-size: 0.85rem; color: var(--danger-text); font-weight: 600; margin-bottom: 0.5rem;"></div>
+        <div id="lastInfractionReason"
+          style="font-size: 0.85rem; color: var(--danger-text); font-weight: 600; margin-bottom: 0.5rem;"></div>
         <div style="font-size: 0.75rem; color: var(--text-subtle);">Historial de incidentes:</div>
         <ul id="incidentLogList" class="event-list"></ul>
       </div>
 
       <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.5rem;">
-        Para continuar con el examen, debes regresar inmediatamente a <strong>Pantalla Completa</strong>. Si alcanzas el límite de faltas, el examen será <strong>anulado automáticamente</strong>.
+        Para continuar con el examen, debes regresar inmediatamente a <strong>Pantalla Completa</strong>. Si alcanzas el
+        límite de faltas, el examen será <strong>anulado automáticamente</strong>.
       </p>
 
       <button type="button" id="btnResumeExam" class="btn btn-danger btn-lg btn-block">
@@ -218,7 +285,11 @@
   <div id="permanentLockModal" class="permanent-lock-overlay hidden">
     <div class="permanent-lock-card">
       <div class="modal-hero-icon danger">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+        </svg>
       </div>
       <h2 style="font-size: 2.1rem; color: var(--danger); margin-bottom: 0.5rem;">Examen Bloqueado y Anulado</h2>
       <p style="color: var(--text-muted); font-size: 1.05rem;">
@@ -226,18 +297,22 @@
       </p>
 
       <div class="audit-box">
-        <div style="font-weight: bold; color: var(--text-headings); margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3rem;">
+        <div
+          style="font-weight: bold; color: var(--text-headings); margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3rem;">
           Registro Oficial de Infracciones:
         </div>
         <div id="auditStudentInfo" style="margin-bottom: 0.5rem; color: var(--text-muted);"></div>
         <div id="auditEventsList"></div>
-        <div style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px dashed var(--border-color); font-size: 0.75rem; color: var(--text-subtle);">
-          Código de Verificación Antifraude: <span id="auditSecurityHash" style="color: var(--danger); font-weight: 700; word-break: break-all;"></span>
+        <div
+          style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px dashed var(--border-color); font-size: 0.75rem; color: var(--text-subtle);">
+          Código de Verificación Antifraude: <span id="auditSecurityHash"
+            style="color: var(--danger); font-weight: 700; word-break: break-all;"></span>
         </div>
       </div>
 
       <p style="font-size: 0.9rem; color: var(--text-muted);">
-        El acceso a las preguntas ha sido revocado. Llama inmediatamente a tu profesor y muéstrale esta pantalla para registrar el informe.
+        El acceso a las preguntas ha sido revocado. Llama inmediatamente a tu profesor y muéstrale esta pantalla para
+        registrar el informe.
       </p>
     </div>
   </div>
@@ -248,18 +323,24 @@
   <div id="finishedModal" class="auth-container hidden">
     <div class="auth-card" style="text-align: center;">
       <div class="modal-hero-icon success">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
       </div>
       <span class="badge success">Evaluación Finalizada</span>
       <h2 style="font-size: 1.8rem; margin: 0.5rem 0;">¡Examen Concluido!</h2>
       <p style="margin-bottom: 1.5rem;">
-        Tu sesión ha finalizado. Si enviaste tus respuestas en el formulario de Google Forms, tu docente ya tiene tu entrega registrada.
+        Tu sesión ha finalizado. Si enviaste tus respuestas en el formulario de Google Forms, tu docente ya tiene tu
+        entrega registrada.
       </p>
 
       <div class="info-box" style="margin-bottom: 1.5rem; text-align: left; font-size: 0.9rem;">
         <div style="margin-bottom: 0.4rem;"><strong>Estudiante:</strong> <span id="summaryStudentName"></span></div>
-        <div style="margin-bottom: 0.4rem;"><strong>Documento / Código:</strong> <span id="summaryStudentId"></span></div>
-        <div style="margin-bottom: 0.4rem;"><strong>Faltas registradas:</strong> <span id="summaryStrikes" style="font-weight: bold; color: var(--success);">0 infracciones (Excelente)</span></div>
+        <div style="margin-bottom: 0.4rem;"><strong>Documento / Código:</strong> <span id="summaryStudentId"></span>
+        </div>
+        <div style="margin-bottom: 0.4rem;"><strong>Faltas registradas:</strong> <span id="summaryStrikes"
+            style="font-weight: bold; color: var(--success);">0 infracciones (Excelente)</span></div>
       </div>
 
       <p class="form-hint" style="text-align: center; justify-content: center;">
@@ -314,4 +395,5 @@
     })();
   </script>
 </body>
+
 </html>

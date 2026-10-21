@@ -69,3 +69,14 @@ No necesitas pagar servidores ni configurar bases de datos:
 - **Cero dependencias externas:** Todo el código funciona 100% autónomo (incluso sin conexión a CDNs externos).
 - **Web Crypto API Nativa:** Cifrado simétrico autenticado AES-GCM con PBKDF2 y sal aleatoria de 128 bits.
 - **Audio Sintético:** La sirena de advertencia se genera con `AudioContext` nativo del navegador, sin requerir descargas de archivos de audio.
+
+
+
+Panel del Profesor (Generador y QR):
+https://alvaropito.github.io/sistema-examenes/admin.html
+
+Portal del Estudiante (Examen supervisado):
+https://alvaropito.github.io/sistema-examenes/ (o index.html)
+
+Repositorio de GitHub:
+https://github.com/alvaropito/sistema-examenes
