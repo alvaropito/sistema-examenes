@@ -88,7 +88,7 @@
         <div class="form-group">
           <label class="form-label" for="examPin">PIN (*)</label>
           <div style="display: flex; gap: 0.5rem;">
-            <input type="text" id="examPin" class="form-input" placeholder="Ej: Matematica2026" style="font-weight: 700; letter-spacing: 0.05em;">
+            <input type="text" id="examPin" class="form-input" placeholder="6 caracteres" minlength="6" maxlength="6" style="font-weight: 700; letter-spacing: 0.05em;">
             <button type="button" id="btnGenPin" class="btn btn-secondary" title="Generar PIN aleatorio">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
               Generar
@@ -96,7 +96,7 @@
           </div>
           <div class="form-hint">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-          <span>Genera un PIN aleatorio y compártelo por separado del enlace. Es una clave compartida, no una identidad de estudiante.</span>
+          <span>El PIN tiene exactamente 6 caracteres. Genéralo al azar y compártelo por separado del enlace.</span>
           </div>
         </div>
 
@@ -197,7 +197,7 @@
     function generateRandomPin() {
       const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
       let pin = '';
-      const randomBytes = new Uint8Array(10);
+      const randomBytes = new Uint8Array(6);
       window.crypto.getRandomValues(randomBytes);
       for (const randomByte of randomBytes) {
         pin += chars[randomByte & 31];
@@ -253,8 +253,8 @@
         return;
       }
 
-      if (!pin) {
-        alert('Por favor ingresa o genera una contraseña/PIN para el examen');
+      if (pin.length !== 6) {
+        alert('El PIN debe tener exactamente 6 caracteres.');
         document.getElementById('examPin').focus();
         return;
       }
