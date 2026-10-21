@@ -162,6 +162,9 @@ const ExamController = (() => {
   // ──────────────────────────────────────────────────
   function requestBrowserFullscreen() {
     const docEl = document.documentElement;
+    if (document.fullscreenEnabled === false) {
+      return Promise.reject(new Error('La política de permisos de esta página bloquea la pantalla completa.'));
+    }
     if (docEl.requestFullscreen) {
       return docEl.requestFullscreen();
     } else if (docEl.webkitRequestFullscreen) {
@@ -171,7 +174,7 @@ const ExamController = (() => {
     } else if (docEl.msRequestFullscreen) {
       return docEl.msRequestFullscreen();
     }
-    return Promise.reject(new Error('Fullscreen no compatible con este navegador'));
+    return Promise.reject(new Error('Este navegador no ofrece la API de pantalla completa.'));
   }
 
   function isBrowserFullscreen() {
@@ -474,7 +477,7 @@ const ExamController = (() => {
   // ──────────────────────────────────────────────────
   async function resumeFromLockdown() {
     try {
-      await requestBrowserFullscreen();
+      if (!isBrowserFullscreen()) await requestBrowserFullscreen();
     } catch (err) {
       console.warn('Re-enter fullscreen error:', err);
     }
@@ -609,17 +612,28 @@ const ExamController = (() => {
       return;
     }
 
-    // 1. SOLICITAR PANTALLA COMPLETA DIRECTA
+    const btn = document.getElementById('btnStartExam');
+
+    // Solicitarlo dentro del evento real de clic/tecla, antes de operaciones
+    // asíncronas. Si el navegador lo rechaza, no iniciar el examen.
     try {
       await requestBrowserFullscreen();
     } catch (fsErr) {
-      console.warn('Fullscreen diferido:', fsErr);
+      console.warn('No se pudo activar pantalla completa:', fsErr);
+      errorDiv.innerText = getFullscreenErrorMessage(fsErr);
+      errorDiv.style.display = 'block';
+      return;
+    }
+
+    if (!isBrowserFullscreen()) {
+      errorDiv.innerText = 'El navegador no confirmó la pantalla completa. Pulsa Iniciar e inténtalo de nuevo.';
+      errorDiv.style.display = 'block';
+      return;
     }
 
     // 2. Activar Keyboard Lock
     lockKeyboard();
 
-    const btn = document.getElementById('btnStartExam');
     btn.innerText = 'Verificando y descifrando...';
 
     try {
@@ -647,6 +661,19 @@ const ExamController = (() => {
       errorDiv.innerText = 'Contraseña o PIN incorrecto. Por favor solicita la clave al profesor.';
       errorDiv.style.display = 'block';
     }
+  }
+
+  function getFullscreenErrorMessage(error) {
+    if (!window.isSecureContext) {
+      return 'La pantalla completa requiere HTTPS o localhost. Abre el examen desde su enlace seguro (https://).';
+    }
+    if (error && error.name === 'NotAllowedError') {
+      return 'El navegador bloqueó la pantalla completa. Pulsa Iniciar directamente y acepta la solicitud del navegador.';
+    }
+    if (error && error.name === 'TypeError') {
+      return 'No se pudo activar pantalla completa en este navegador o contexto. Abre el examen en una pestaña normal de Chrome o Edge.';
+    }
+    return `No se pudo activar pantalla completa${error && error.message ? `: ${error.message}` : '.'}`;
   }
 
   // ──────────────────────────────────────────────────
@@ -712,7 +739,9 @@ const ExamController = (() => {
         el.addEventListener('keydown', (e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
-            document.getElementById('btnStartExam').click();
+            // La llamada directa conserva la activación del teclado; click()
+            // programático puede hacer que el navegador rechace fullscreen.
+            handleStartExam();
           }
         });
       }
@@ -731,10 +760,11 @@ const ExamController = (() => {
     document.getElementById('btnForceFullscreenNow').addEventListener('click', async () => {
       try {
         await requestBrowserFullscreen();
+        if (!isBrowserFullscreen()) throw new Error('El navegador no confirmó la pantalla completa.');
         lockKeyboard();
       } catch (err) {
         console.warn('Error al activar pantalla completa:', err);
-        alert('Debes permitir el modo de Pantalla Completa en tu navegador para realizar el examen.');
+        alert(getFullscreenErrorMessage(err));
       }
     });
 
