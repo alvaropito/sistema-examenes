@@ -82,7 +82,7 @@
           <div class="panel-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
           </div>
-          <h2 class="panel-title">2. Políticas Anti-Trampas</h2>
+          <h2 class="panel-title">2. Supervisión del Navegador</h2>
         </div>
 
         <div class="form-group">
@@ -96,7 +96,7 @@
           </div>
           <div class="form-hint">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-            <span>Esta clave cifra el enlace de Google Forms. Dásela a tus alumnos en el aula justo al empezar la prueba.</span>
+          <span>Genera un PIN aleatorio y compártelo por separado del enlace. Es una clave compartida, no una identidad de estudiante.</span>
           </div>
         </div>
 
@@ -105,7 +105,7 @@
           <input type="number" id="durationMinutes" class="form-input" min="0" max="300" value="180">
           <div class="form-hint">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            <span>Coloca 0 para tiempo ilimitado. Si se asigna tiempo, se mostrará un reloj con aviso sonoro al final.</span>
+            <span>Coloca 0 para tiempo ilimitado. El reloj usa la hora del navegador y no es un límite verificable por el servidor.</span>
           </div>
         </div>
 
@@ -166,7 +166,7 @@
         </div>
       </div>
 
-      <p style="margin-top: 0.75rem;">Comparte este enlace a tus alumnos o proyéctalo en la pantalla del salón. Nadie podrá abrir el examen hasta que des el PIN de acceso.</p>
+      <p style="margin-top: 0.75rem;">Comparte este enlace o proyéctalo en el salón. El formulario del enlace requiere el PIN para descifrarlo; comparte el PIN por separado.</p>
 
       <div class="link-box">
         <input type="text" id="generatedUrl" class="link-input" readonly>
@@ -197,8 +197,10 @@
     function generateRandomPin() {
       const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
       let pin = '';
-      for (let i = 0; i < 6; i++) {
-        pin += chars.charAt(Math.floor(Math.random() * chars.length));
+      const randomBytes = new Uint8Array(10);
+      window.crypto.getRandomValues(randomBytes);
+      for (const randomByte of randomBytes) {
+        pin += chars[randomByte & 31];
       }
       return pin;
     }
@@ -209,22 +211,26 @@
 
     // Formatear enlace de Google Forms para que funcione como embedded
     function sanitizeGoogleFormUrl(rawUrl) {
-      let url = rawUrl.trim();
-      if (!url) return '';
-
-      // Si es un enlace de edición o respuesta general, convertirlo a viewform
-      if (url.includes('docs.google.com/forms')) {
-        // Remover /edit o parámetros previos
-        url = url.replace(/\/edit.*$/, '/viewform');
-        if (!url.includes('/viewform')) {
-          url = url.replace(/\/$/, '') + '/viewform';
-        }
-        // Asegurar el parámetro embedded=true
-        if (!url.includes('embedded=true')) {
-          url += (url.includes('?') ? '&' : '?') + 'embedded=true';
-        }
+      const url = new URL(rawUrl.trim());
+      if (url.protocol !== 'https:' || url.username || url.password || url.port) {
+        throw new Error('Usa un enlace HTTPS válido de Google Forms.');
       }
-      return url;
+      if (url.hostname === 'forms.gle') {
+        if (!/^\/[A-Za-z0-9_-]+\/?$/.test(url.pathname)) {
+          throw new Error('El enlace corto de Google Forms no es válido.');
+        }
+        url.search = '';
+        url.hash = '';
+        return url.href;
+      }
+      if (url.hostname !== 'docs.google.com' || !url.pathname.startsWith('/forms/')) {
+        throw new Error('Solo se permiten enlaces de docs.google.com/forms o forms.gle.');
+      }
+      url.hash = '';
+      url.pathname = url.pathname.replace(/\/edit\/?$/, '/viewform').replace(/\/$/, '');
+      if (!url.pathname.endsWith('/viewform')) url.pathname += '/viewform';
+      url.searchParams.set('embedded', 'true');
+      return url.href;
     }
 
     let qrCodeInstance = null;
@@ -247,30 +253,20 @@
         return;
       }
 
-      // Validar que sea una URL de Google Forms
-      const trimmedUrl = rawUrl.trim();
-      const isGoogleForm = /^https?:\/\/(docs\.google\.com\/forms|forms\.gle)\//i.test(trimmedUrl);
-      if (!isGoogleForm) {
-        const proceed = confirm(
-          '⚠️ La URL ingresada no parece ser un enlace de Google Forms.\n\n' +
-          'URLs válidas tienen este formato:\n' +
-          '• https://docs.google.com/forms/d/e/.../viewform\n' +
-          '• https://forms.gle/...\n\n' +
-          '¿Deseas continuar de todos modos con esta URL?'
-        );
-        if (!proceed) {
-          document.getElementById('formUrl').focus();
-          return;
-        }
-      }
-
       if (!pin) {
         alert('Por favor ingresa o genera una contraseña/PIN para el examen');
         document.getElementById('examPin').focus();
         return;
       }
 
-      const formUrl = sanitizeGoogleFormUrl(rawUrl);
+      let formUrl;
+      try {
+        formUrl = sanitizeGoogleFormUrl(rawUrl);
+      } catch (err) {
+        alert(err.message || 'El enlace debe ser una URL válida de Google Forms.');
+        document.getElementById('formUrl').focus();
+        return;
+      }
 
       // Objeto de configuración a cifrar con claves compactas para optimizar tamaño
       const examConfig = {

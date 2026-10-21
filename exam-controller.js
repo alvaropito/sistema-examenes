@@ -22,6 +22,7 @@ const ExamController = (() => {
     incidentLog: [],
     timerInterval: null,
     timeRemainingSecs: 0,
+    deadlineAtMs: null,
     isExamActive: false,
     isLockdownActive: false,
     isPermanentlyLocked: false,
@@ -57,19 +58,13 @@ const ExamController = (() => {
     try {
       const snapshot = {
         payload: _state.payload,
-        studentName: _state.studentName,
-        studentId: _state.studentId,
         strikes: _state.strikes,
         maxStrikes: _state.maxStrikes,
         incidentLog: _state.incidentLog,
         timeRemainingSecs: _state.timeRemainingSecs,
+        deadlineAtMs: _state.deadlineAtMs,
         isExamActive: _state.isExamActive,
-        isPermanentlyLocked: _state.isPermanentlyLocked,
-        configUrl: _state.config ? _state.config.url : null,
-        configTitle: _state.config ? _state.config.title : null,
-        configCourse: _state.config ? _state.config.course : null,
-        configDuration: _state.config ? _state.config.duration : null,
-        configStrikes: _state.config ? _state.config.strikes : null
+        isPermanentlyLocked: _state.isPermanentlyLocked
       };
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
     } catch (e) {
@@ -81,7 +76,21 @@ const ExamController = (() => {
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY);
       if (!raw) return null;
-      return JSON.parse(raw);
+      const saved = JSON.parse(raw);
+      // Migrar también snapshots antiguos y borrar del storage la identidad y
+      // la URL en claro que guardaban versiones previas.
+      const sanitized = {
+        payload: saved.payload,
+        strikes: saved.strikes,
+        maxStrikes: saved.maxStrikes,
+        incidentLog: Array.isArray(saved.incidentLog) ? saved.incidentLog : [],
+        timeRemainingSecs: saved.timeRemainingSecs,
+        deadlineAtMs: saved.deadlineAtMs,
+        isExamActive: saved.isExamActive,
+        isPermanentlyLocked: saved.isPermanentlyLocked
+      };
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+      return sanitized;
     } catch (e) {
       return null;
     }
@@ -186,6 +195,17 @@ const ExamController = (() => {
     );
   }
 
+  function isAllowedExamFormUrl(rawUrl) {
+    try {
+      const url = new URL(rawUrl);
+      if (url.protocol !== 'https:' || url.username || url.password || url.port) return false;
+      if (url.hostname === 'forms.gle') return /^\/[A-Za-z0-9_-]+\/?$/.test(url.pathname);
+      return url.hostname === 'docs.google.com' && url.pathname.startsWith('/forms/');
+    } catch (err) {
+      return false;
+    }
+  }
+
   function lockKeyboard() {
     if (navigator.keyboard && navigator.keyboard.lock) {
       navigator.keyboard.lock(['Escape', 'Tab', 'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight']).catch(() => {});
@@ -213,8 +233,12 @@ const ExamController = (() => {
   function startCountdown() {
     const timerText = document.getElementById('timerText');
     const timerPill = document.getElementById('timerContainer');
+    if (!_state.deadlineAtMs) {
+      _state.deadlineAtMs = Date.now() + (_state.timeRemainingSecs * 1000);
+    }
 
     function updateClock() {
+      _state.timeRemainingSecs = Math.max(0, Math.ceil((_state.deadlineAtMs - Date.now()) / 1000));
       if (_state.timeRemainingSecs <= 0) {
         clearInterval(_state.timerInterval);
         _state.timerInterval = null;
@@ -231,7 +255,6 @@ const ExamController = (() => {
         timerPill.classList.add('urgent');
       }
 
-      _state.timeRemainingSecs--;
       // Guardar estado cada 10 segundos para no saturar storage
       if (_state.timeRemainingSecs % 10 === 0) {
         saveToSession();
@@ -246,6 +269,10 @@ const ExamController = (() => {
   // LANZAR SESIÓN DE EXAMEN
   // ──────────────────────────────────────────────────
   async function launchExamSession() {
+    if (!_state.config || !isAllowedExamFormUrl(_state.config.url)) {
+      throw new Error('La configuración no contiene un enlace HTTPS permitido de Google Forms.');
+    }
+
     // 1. Activar Keyboard Lock
     lockKeyboard();
 
@@ -258,7 +285,7 @@ const ExamController = (() => {
 
     // 3. Configurar temporizador si existe
     if (_state.config.duration && _state.config.duration > 0) {
-      if (_state.timeRemainingSecs <= 0) {
+      if (!_state.deadlineAtMs && _state.timeRemainingSecs <= 0) {
         _state.timeRemainingSecs = _state.config.duration * 60;
       }
       startCountdown();
@@ -514,10 +541,20 @@ const ExamController = (() => {
     iframe.remove();
 
     // Preparar informe de auditoría
-    document.getElementById('auditStudentInfo').innerHTML = `
-      <strong>Alumno:</strong> ${_state.studentName} | <strong>ID:</strong> ${_state.studentId}<br>
-      <strong>Total de Infracciones:</strong> ${_state.strikes} de ${_state.maxStrikes}
-    `;
+    const studentInfo = document.getElementById('auditStudentInfo');
+    studentInfo.replaceChildren();
+    const identityLine = document.createElement('div');
+    const studentLabel = document.createElement('strong');
+    studentLabel.textContent = 'Alumno: ';
+    identityLine.append(studentLabel, document.createTextNode(_state.studentName));
+    const idLabel = document.createElement('strong');
+    idLabel.textContent = ' | ID: ';
+    identityLine.append(idLabel, document.createTextNode(_state.studentId));
+    const strikeLine = document.createElement('div');
+    const strikeLabel = document.createElement('strong');
+    strikeLabel.textContent = 'Total de infracciones: ';
+    strikeLine.append(strikeLabel, document.createTextNode(`${_state.strikes} de ${_state.maxStrikes}`));
+    studentInfo.append(identityLine, strikeLine);
 
     const auditEvents = document.getElementById('auditEventsList');
     auditEvents.innerHTML = '';
@@ -527,13 +564,7 @@ const ExamController = (() => {
       auditEvents.appendChild(div);
     });
 
-    // Hash criptográfico de verificación antifraude
-    const rawReport = `${_state.studentId}-${_state.studentName}-${_state.strikes}-${_state.incidentLog.join('|')}`;
-    const encoder = new TextEncoder();
-    const hashBuffer = await window.crypto.subtle.digest('SHA-256', encoder.encode(rawReport));
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    document.getElementById('auditSecurityHash').innerText = hashHex.substring(0, 32).toUpperCase();
+    document.getElementById('auditSecurityHash').textContent = 'No verificado por un servidor';
 
     document.getElementById('permanentLockModal').classList.remove('hidden');
 
@@ -658,7 +689,7 @@ const ExamController = (() => {
         document.exitFullscreen().catch(() => {});
       }
       btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"></path></svg> Iniciar Examen en Pantalla Completa';
-      errorDiv.innerText = 'Contraseña o PIN incorrecto. Por favor solicita la clave al profesor.';
+      errorDiv.innerText = err.message || 'No se pudo iniciar el examen. Verifica la configuración y el PIN.';
       errorDiv.style.display = 'block';
     }
   }
@@ -681,11 +712,10 @@ const ExamController = (() => {
   // ──────────────────────────────────────────────────
   async function tryRecoverSession() {
     const saved = loadFromSession();
-    if (!saved || !saved.isExamActive || saved.isPermanentlyLocked) return false;
+    if (!saved || typeof saved.payload !== 'string' || !saved.isExamActive || saved.isPermanentlyLocked) return false;
 
     const shouldRecover = confirm(
       '⚠️ Se detectó una sesión de examen activa que fue interrumpida.\n\n' +
-      `Estudiante: ${saved.studentName}\n` +
       `Faltas acumuladas: ${saved.strikes} / ${saved.maxStrikes}\n\n` +
       '¿Deseas recuperar tu sesión y continuar el examen?'
     );
@@ -695,20 +725,43 @@ const ExamController = (() => {
       return false;
     }
 
-    // Restaurar estado
+    // Solicitar los datos nuevamente en vez de guardar identidad, PIN o la URL
+    // ya descifrada en sessionStorage.
+    const studentName = prompt('Escribe nuevamente el nombre del estudiante:');
+    const studentId = prompt('Escribe nuevamente el documento o código:');
+    const pin = prompt('Ingresa el PIN del examen para recuperar la configuración:');
+    if (!studentName || !studentId || !pin) return false;
+
+    let config;
+    try {
+      config = await ExamCrypto.decryptData(saved.payload, pin.trim());
+    } catch (err) {
+      alert('No se pudo recuperar la sesión. Revisa el PIN e inténtalo de nuevo.');
+      return false;
+    }
+
+    if (!isAllowedExamFormUrl(config.u || config.url)) {
+      alert('La sesión guardada no contiene un enlace permitido de Google Forms.');
+      clearSession();
+      return false;
+    }
+
+    // Restaurar el estado de la sesión.
     _state.payload = saved.payload;
-    _state.studentName = saved.studentName;
-    _state.studentId = saved.studentId;
+    _state.studentName = studentName.trim();
+    _state.studentId = studentId.trim();
     _state.strikes = saved.strikes;
     _state.maxStrikes = saved.maxStrikes;
     _state.incidentLog = saved.incidentLog || [];
     _state.timeRemainingSecs = saved.timeRemainingSecs || 0;
+    _state.deadlineAtMs = saved.deadlineAtMs || null;
     _state.config = {
-      url: saved.configUrl,
-      title: saved.configTitle,
-      course: saved.configCourse,
-      duration: saved.configDuration,
-      strikes: saved.configStrikes
+      url: config.u || config.url,
+      title: config.t || config.title,
+      course: config.c || config.course,
+      instructions: config.i || config.instructions,
+      duration: config.d !== undefined ? config.d : config.duration,
+      strikes: config.s !== undefined ? config.s : (config.strikes || 3)
     };
 
     // Solicitar pantalla completa
