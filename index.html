@@ -8,10 +8,16 @@
   <meta http-equiv="Expires" content="0">
   <title>Portal de Examen Seguro | Modo Supervisado</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><text y='20' font-size='20'>🛡️</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="styles.css?v=3">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    (function() {
+      const theme = localStorage.getItem('app-theme') || 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
 </head>
 <body>
 
@@ -20,13 +26,20 @@
        ========================================== -->
   <div id="authScreen" class="auth-container">
     <div class="auth-card">
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 0.5rem;">
+        <button type="button" class="theme-toggle-btn" id="themeToggleBtnAuth" title="Cambiar a Modo Claro / Oscuro">
+          <span class="theme-toggle-icon">🌙</span>
+          <span class="theme-toggle-text">Modo Oscuro</span>
+        </button>
+      </div>
+
       <div style="text-align: center; margin-bottom: 2rem;">
         <span class="badge" id="examSubjectBadge">🎓 Examen Universitario</span>
         <h1 id="displayExamTitle" style="font-size: 1.8rem; margin: 0.5rem 0 0.25rem;">Portal de Evaluación Segura</h1>
         <p id="displayExamCourse" style="font-size: 0.95rem; color: var(--text-muted);">Verificación de Identidad del Estudiante</p>
       </div>
 
-      <div id="manualPayloadSection" class="form-group hidden" style="background: rgba(99,102,241,0.08); padding: 1rem; border-radius: var(--radius-md); border: 1px dashed rgba(99,102,241,0.4);">
+      <div id="manualPayloadSection" class="form-group hidden" style="background: var(--primary-light); padding: 1rem; border-radius: var(--radius-md); border: 1px dashed rgba(79,70,229,0.4);">
         <label class="form-label" for="manualPayloadInput">Código Cifrado del Examen</label>
         <input type="text" id="manualPayloadInput" class="form-input" placeholder="Pega el código generado si no entraste por enlace directo">
       </div>
@@ -50,16 +63,16 @@
           </div>
         </div>
 
-        <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; margin: 1.5rem 0;">
-          <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem;">Condiciones de Supervisión:</h4>
-          <ul style="list-style: none; font-size: 0.85rem; color: #cbd5e1; display: grid; gap: 0.4rem;">
+        <div class="info-box">
+          <h4 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-headings); margin-bottom: 0.5rem;">Condiciones de Supervisión:</h4>
+          <ul style="list-style: none; font-size: 0.85rem; color: var(--text-muted); display: grid; gap: 0.4rem;">
             <li>🖥️ El examen se abrirá obligatoriamente en <strong>Pantalla Completa</strong>.</li>
             <li>🚫 Cambiar de ventana, presionar Alt+Tab o abrir otra pestaña <strong>será penalizado como falta</strong>.</li>
             <li>⚠️ Al superar el número máximo de faltas, el examen se <strong>bloqueará de inmediato</strong>.</li>
           </ul>
         </div>
 
-        <div id="authError" class="form-hint" style="color: #f87171; font-weight: 600; margin-bottom: 1rem; display: none;"></div>
+        <div id="authError" class="form-hint" style="color: var(--danger); font-weight: 600; margin-bottom: 1rem; display: none;"></div>
 
         <button type="button" id="btnStartExam" class="btn btn-primary btn-block btn-lg">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"></path></svg>
@@ -93,16 +106,19 @@
         <!-- Semáforo de Faltas -->
         <div class="strikes-pill" title="Historial de infracciones por cambio de ventana">
           <span>Faltas:</span>
-          <span id="strikesFraction" style="font-weight: 700; color: #cbd5e1;">0 / 3</span>
+          <span id="strikesFraction" style="font-weight: 700; color: var(--text-main);">0 / 3</span>
           <div id="strikeDots" style="display: flex; gap: 4px; margin-left: 4px;"></div>
         </div>
       </div>
 
-      <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
         <span class="badge success" style="margin-bottom: 0;">
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--success); display: inline-block;"></span>
           Supervisión Activa
         </span>
+        <button type="button" id="btnHudThemeToggle" class="btn btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.85rem;" title="Cambiar Tema (Claro / Oscuro)">
+          <span class="theme-hud-icon">🌙</span>
+        </button>
         <button type="button" id="btnHudFullscreen" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; display: flex; align-items: center; gap: 4px;">
           <span>⛶</span> Pantalla Completa
         </button>
@@ -129,11 +145,11 @@
   <div id="fullscreenEnforcerModal" class="fullscreen-enforcer-overlay hidden">
     <div class="fullscreen-enforcer-card">
       <div style="font-size: 4rem; margin-bottom: 0.75rem;">🖥️</div>
-      <span class="badge" style="background: rgba(99,102,241,0.2); color: #818cf8; border-color: rgba(99,102,241,0.4); margin-bottom: 0.75rem;">
+      <span class="badge" style="background: var(--primary-light); color: var(--primary-text); border-color: rgba(79,70,229,0.3); margin-bottom: 0.75rem;">
         Modo Supervisado Activo
       </span>
-      <h2 style="font-size: 1.8rem; color: #fff; margin-bottom: 0.5rem;">Pantalla Completa Obligatoria</h2>
-      <p style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.6;">
+      <h2 style="font-size: 1.8rem; color: var(--text-headings); margin-bottom: 0.5rem;">Pantalla Completa Obligatoria</h2>
+      <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.6;">
         Para presentar tu examen y mantener la supervisión antifraude, este sistema <strong>exige estar en Pantalla Completa</strong>.<br>
         Las preguntas permanecerán bloqueadas y ocultas hasta que actives la pantalla completa.
       </p>
@@ -145,7 +161,7 @@
         Entrar a Pantalla Completa para Continuar
       </button>
 
-      <p class="form-hint" style="text-align: center; justify-content: center; margin-top: 1rem; color: #94a3b8;">
+      <p class="form-hint" style="text-align: center; justify-content: center; margin-top: 1rem;">
         💡 Recuerda: si sales de pantalla completa durante el examen, se registrará una falta automática.
       </p>
     </div>
@@ -157,22 +173,22 @@
   <div id="lockdownModal" class="lockdown-overlay hidden">
     <div class="lockdown-card">
       <div class="alarm-icon">⚠️</div>
-      <h2 style="font-size: 1.8rem; color: #f87171; margin-bottom: 0.5rem;">¡Infracción Detectada!</h2>
-      <p style="color: #fca5a5; font-size: 1rem;">
+      <h2 style="font-size: 1.8rem; color: var(--danger); margin-bottom: 0.5rem;">¡Infracción Detectada!</h2>
+      <p style="color: var(--text-muted); font-size: 1rem;">
         Has intentado cambiar de ventana, presionar teclas de navegación o salir de la pantalla completa.
       </p>
 
       <div class="strike-notice">
         <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 0.25rem;">
-          <span id="strikeModalBadge" style="color: #ef4444;">Falta acumulada: 1</span>
-          <span id="strikeModalLimit" style="color: #cbd5e1;">Límite permitido: 3</span>
+          <span id="strikeModalBadge" style="color: var(--danger); font-weight: 700;">Falta acumulada: 1</span>
+          <span id="strikeModalLimit" style="color: var(--text-subtle);">Límite permitido: 3</span>
         </div>
-        <div id="lastInfractionReason" style="font-size: 0.85rem; color: #fecaca; margin-bottom: 0.5rem;"></div>
-        <div style="font-size: 0.75rem; color: #94a3b8;">Historial de incidentes:</div>
+        <div id="lastInfractionReason" style="font-size: 0.85rem; color: var(--danger-text); font-weight: 600; margin-bottom: 0.5rem;"></div>
+        <div style="font-size: 0.75rem; color: var(--text-subtle);">Historial de incidentes:</div>
         <ul id="incidentLogList" class="event-list"></ul>
       </div>
 
-      <p style="font-size: 0.85rem; color: #e2e8f0; margin-bottom: 1.5rem;">
+      <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.5rem;">
         Para continuar con el examen, debes regresar inmediatamente a <strong>Pantalla Completa</strong>. Si alcanzas el límite de faltas, el examen será <strong>anulado automáticamente</strong>.
       </p>
 
@@ -188,23 +204,23 @@
   <div id="permanentLockModal" class="permanent-lock-overlay hidden">
     <div class="permanent-lock-card">
       <div style="font-size: 4.5rem; margin-bottom: 0.5rem;">🚫</div>
-      <h2 style="font-size: 2.1rem; color: #ef4444; margin-bottom: 0.5rem;">Examen Bloqueado y Anulado</h2>
-      <p style="color: #fca5a5; font-size: 1.05rem;">
+      <h2 style="font-size: 2.1rem; color: var(--danger); margin-bottom: 0.5rem;">Examen Bloqueado y Anulado</h2>
+      <p style="color: var(--text-muted); font-size: 1.05rem;">
         Se ha superado el número máximo de faltas permitidas por intento de cambio de pantalla o abandono del examen.
       </p>
 
       <div class="audit-box">
-        <div style="font-weight: bold; color: #fff; margin-bottom: 0.5rem; border-bottom: 1px solid #450a0a; padding-bottom: 0.3rem;">
+        <div style="font-weight: bold; color: var(--text-headings); margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3rem;">
           Registro Oficial de Infracciones:
         </div>
-        <div id="auditStudentInfo" style="margin-bottom: 0.5rem; color: #cbd5e1;"></div>
+        <div id="auditStudentInfo" style="margin-bottom: 0.5rem; color: var(--text-muted);"></div>
         <div id="auditEventsList"></div>
-        <div style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px dashed #450a0a; font-size: 0.75rem; color: #a1a1aa;">
-          Código de Verificación Antifraude: <span id="auditSecurityHash" style="color: #f87171; word-break: break-all;"></span>
+        <div style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px dashed var(--border-color); font-size: 0.75rem; color: var(--text-subtle);">
+          Código de Verificación Antifraude: <span id="auditSecurityHash" style="color: var(--danger); font-weight: 700; word-break: break-all;"></span>
         </div>
       </div>
 
-      <p style="font-size: 0.9rem; color: #e2e8f0;">
+      <p style="font-size: 0.9rem; color: var(--text-muted);">
         ⚠️ El acceso a las preguntas ha sido revocado. Llama inmediatamente a tu profesor y muéstrale esta pantalla para registrar el informe.
       </p>
     </div>
@@ -222,7 +238,7 @@
         Tu sesión ha finalizado. Si enviaste tus respuestas en el formulario de Google Forms, tu docente ya tiene tu entrega registrada.
       </p>
 
-      <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem; text-align: left; font-size: 0.9rem;">
+      <div class="info-box" style="margin-bottom: 1.5rem; text-align: left; font-size: 0.9rem;">
         <div style="margin-bottom: 0.4rem;"><strong>Estudiante:</strong> <span id="summaryStudentName"></span></div>
         <div style="margin-bottom: 0.4rem;"><strong>Documento / Código:</strong> <span id="summaryStudentId"></span></div>
         <div style="margin-bottom: 0.4rem;"><strong>Faltas registradas:</strong> <span id="summaryStrikes" style="font-weight: bold; color: var(--success);">0 infracciones (Excelente)</span></div>
@@ -236,5 +252,46 @@
 
   <script src="crypto.js?v=3"></script>
   <script src="exam-controller.js?v=3"></script>
+  <script>
+    // Sincronización del Tema (Claro / Oscuro)
+    (function setupThemeHandlers() {
+      const authBtn = document.getElementById('themeToggleBtnAuth');
+      const hudBtn = document.getElementById('btnHudThemeToggle');
+
+      function syncAllThemeButtons(t) {
+        if (authBtn) {
+          const icon = authBtn.querySelector('.theme-toggle-icon');
+          const text = authBtn.querySelector('.theme-toggle-text');
+          if (t === 'dark') {
+            if (icon) icon.textContent = '☀️';
+            if (text) text.textContent = 'Modo Claro';
+          } else {
+            if (icon) icon.textContent = '🌙';
+            if (text) text.textContent = 'Modo Oscuro';
+          }
+        }
+        if (hudBtn) {
+          const hudIcon = hudBtn.querySelector('.theme-hud-icon');
+          if (hudIcon) {
+            hudIcon.textContent = (t === 'dark') ? '☀️' : '🌙';
+          }
+        }
+      }
+
+      function toggleAppTheme() {
+        const activeTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const next = activeTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('app-theme', next);
+        syncAllThemeButtons(next);
+      }
+
+      const initialTheme = document.documentElement.getAttribute('data-theme') || 'light';
+      syncAllThemeButtons(initialTheme);
+
+      if (authBtn) authBtn.addEventListener('click', toggleAppTheme);
+      if (hudBtn) hudBtn.addEventListener('click', toggleAppTheme);
+    })();
+  </script>
 </body>
 </html>

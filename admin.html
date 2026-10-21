@@ -9,10 +9,23 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    (function() {
+      const theme = localStorage.getItem('app-theme') || 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
 </head>
 <body>
 
   <div class="admin-container">
+    <div class="top-action-bar">
+      <button type="button" class="theme-toggle-btn" id="themeToggleBtn" title="Cambiar a Modo Claro / Oscuro">
+        <span class="theme-toggle-icon">🌙</span>
+        <span class="theme-toggle-text">Modo Oscuro</span>
+      </button>
+    </div>
+
     <!-- Encabezado -->
     <header class="page-header">
       <div class="badge">
@@ -333,9 +346,37 @@
       }
     });
 
-    // Inicializar con un PIN por defecto
+    // Inicializar con un PIN por defecto y configurar tema
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('examPin').value = generateRandomPin();
+
+      // Configuración del botón de tema
+      const themeBtn = document.getElementById('themeToggleBtn');
+      if (themeBtn) {
+        const icon = themeBtn.querySelector('.theme-toggle-icon');
+        const text = themeBtn.querySelector('.theme-toggle-text');
+        
+        function updateThemeUI(t) {
+          if (t === 'dark') {
+            if (icon) icon.textContent = '☀️';
+            if (text) text.textContent = 'Modo Claro';
+          } else {
+            if (icon) icon.textContent = '🌙';
+            if (text) text.textContent = 'Modo Oscuro';
+          }
+        }
+
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        updateThemeUI(currentTheme);
+
+        themeBtn.addEventListener('click', () => {
+          const activeTheme = document.documentElement.getAttribute('data-theme') || 'light';
+          const next = activeTheme === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('app-theme', next);
+          updateThemeUI(next);
+        });
+      }
     });
   </script>
 </body>
