@@ -3,7 +3,7 @@
    Diseño Moderno & Elegante - Modo Blanco (Light) & Soporte Modo Oscuro
    =================================================== */
 
-:root {
+:root, [data-theme="light"], html:not([data-theme="dark"]) {
   /* ===================================================
      PALETA MODO BLANCO / CLARO (POR DEFECTO)
      =================================================== */
